@@ -16,7 +16,7 @@ column_config_sample_table = {
     "Starting concentration": st.column_config.NumberColumn(),
     "Dilution factor": st.column_config.NumberColumn(),
     "Ligand concentration": st.column_config.NumberColumn(),
-    "Units": st.column_config.SelectboxColumn(options=["nM", "uM", "mM"], default=0),
+    "Units": st.column_config.SelectboxColumn(options=["nM", "uM", "mM"], default="nM"),
     "Excluded wells": st.column_config.TextColumn(),
 }
 
@@ -51,10 +51,10 @@ def generate_empty_plate() -> pd.DataFrame:
     return empty_plate
 
 
-def generate_sample_table(number_of_samples) -> pd.DataFrame:
+def generate_sample_table() -> pd.DataFrame:
     # Generate sample info table
 
-    empty_column = [None] * number_of_samples
+    empty_column = [None] #* number_of_samples
 
     table_dict = {
         "Sample label": empty_column,
@@ -63,7 +63,7 @@ def generate_sample_table(number_of_samples) -> pd.DataFrame:
         "Starting concentration": empty_column,
         "Dilution factor": empty_column,
         "Ligand concentration": empty_column,
-        "Units": empty_column,
+        "Units": ["nM"],
         "Excluded wells": empty_column,
     }
 

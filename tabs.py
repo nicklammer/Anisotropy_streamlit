@@ -20,13 +20,9 @@ def data_tab_selffill(tab, parameters) -> dict:
         column_config=helpers.column_config_data_plate,
     )
 
-    number_of_samples = tab.number_input(
-        "How many samples do you have?", min_value=1, value=1
-    )
-
-    parameters["titration direction"] = tab.selectbox(
-        "Titrated in rows or columns?", options=["Rows", "Columns"]
-    )
+    # number_of_samples = tab.number_input(
+    #     "How many samples do you have?", min_value=1, value=1
+    # )
 
     tab.write("Enter sample information here:")
 
@@ -34,11 +30,15 @@ def data_tab_selffill(tab, parameters) -> dict:
     # number_of_samples without erasing the contents.
     # or maybe this doesn't matter?
     table_samples = tab.data_editor(
-        helpers.generate_sample_table(number_of_samples),
+        helpers.generate_sample_table(),
         key="samples",
         hide_index=True,
         num_rows="dynamic",
         column_config=helpers.column_config_sample_table,
+    )
+
+    parameters["titration direction"] = tab.selectbox(
+        "Titrated in rows or columns?", options=["Rows", "Columns"]
     )
 
     parameters["assay type"] = tab.selectbox(
@@ -60,47 +60,41 @@ def fit_options_tab(tab, parameters) -> dict:
 
     left.write("Select type of fit:")
     parameters["fit type"] = left.selectbox(
-        "Fit", options=["Simplified binding isotherm", "Hill fit", "Multi-step"]
+        "Fit", options=["Simplified binding isotherm",
+                        "Quadratic", "Hill fit", "Multi-step"]
     )
 
     right.write("Initial parameters:")
 
     # Available parameters depend on the fit equation
     # This is kind of like custom components?
-    if parameters["fit type"] == "Simplified binding isotherm":
-        simplified_fit_options(right, parameters)
+    if parameters["fit type"] == "Multi-step":
+        multi_fit_options(right, parameters)
 
-    elif parameters["fit type"] == "Hill fit":
+    else:
         simplified_fit_options(right, parameters)
-        # hill_fit_options()
-
-    elif parameters["fit type"] == "Multi-step":
-        simplified_fit_options(right, parameters)
-        # multi_fit_options()
 
     return parameters
 
-
+# TODO: display fit equations on page
 def simplified_fit_options(tab_column, parameters):
     parameters["Kdi"] = tab_column.number_input("Kd")
     parameters["Si"] = tab_column.number_input("S")
     parameters["Oi"] = tab_column.number_input("O")
 
+def multi_fit_options(tab_column, parameters):
+    simplified_fit_options(tab_column, parameters)
 
-def hill_fit_options():
-    return NotImplemented
-
-
-def multi_fit_options():
-    return NotImplemented
+    parameters["Kd2i"] = tab_column.number_input("Kd2")
+    parameters["S2i"] = tab_column.number_input("S2")
 
 
 def plot_options_tab(tab, parameters) -> dict:
 
     left, right = tab.columns(2)
 
-    parameters["plot title"] = left.text_input("Plot title")
-    parameters["filename"] = left.text_input("Base filename")
+    parameters["plot title"] = left.text_input("Plot title", value="plottitle")
+    parameters["filename"] = left.text_input("Base filename", value="filename")
 
     parameters["samples per plot"] = left.number_input(
         "Number of samples per plot", min_value=1, value=4
@@ -152,5 +146,7 @@ def style_options_tab(tab, parameters) -> dict:
         column_config=helpers.column_config_style_table,
         disabled=["Sample"],
     )
+
+    parameters["plot style table"] = table_plot_style
 
     return parameters

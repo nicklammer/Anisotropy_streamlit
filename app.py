@@ -12,7 +12,12 @@ def run_analysis():
 
 parameters = {}
 
-st.title("Analyze Fluorescence Anisotropy - Self fill")
+st.title("Analyze Fluorescence Anisotropy")
+st.header("Self fill")
+
+buttons_left, buttons_right = st.columns([0.15, 0.85])
+plot_button = buttons_left.button("Fit and plot", type="primary")
+save_button = buttons_right.button("Save parameters")
 
 data_tab, fit_tab, plot_tab, style_tab = st.tabs(
     ["Data", "Fit options", "Plot options", "Style options"]
