@@ -4,7 +4,14 @@ import helpers
 
 
 def data_tab_selffill(tab, parameters) -> dict:
+
+    # TODO: make a separate polarization page to simplify processing of data
+    parameters["assay type"] = tab.selectbox(
+        "Anisotropy or polarization?", options=["Anisotropy", "Polarization"]
+    )
+
     excel_file = tab.file_uploader("Upload CLARIOstar .xlsx file here (optional)", accept_multiple_files=False, type="xlsx")
+
     if excel_file:
         df_parallel, df_perpendicular = helpers.read_excel_384well_clariostar(excel_file)
     else:
@@ -27,10 +34,6 @@ def data_tab_selffill(tab, parameters) -> dict:
         column_config=helpers.column_config_data_plate,
     )
 
-    # number_of_samples = tab.number_input(
-    #     "How many samples do you have?", min_value=1, value=1
-    # )
-
     tab.write("Enter sample information here:")
 
     # TODO: This table needs to have a number of rows controlled by
@@ -46,10 +49,6 @@ def data_tab_selffill(tab, parameters) -> dict:
 
     parameters["titration direction"] = tab.selectbox(
         "Titrated in rows or columns?", options=["Rows", "Columns"]
-    )
-
-    parameters["assay type"] = tab.selectbox(
-        "Anisotropy or polarization?", options=["Anisotropy", "Polarization"]
     )
 
     # Pack up tables
@@ -89,6 +88,7 @@ def simplified_fit_options(tab_column, parameters):
     parameters["Si"] = tab_column.number_input("S")
     parameters["Oi"] = tab_column.number_input("O")
 
+
 def multi_fit_options(tab_column, parameters):
     simplified_fit_options(tab_column, parameters)
 
@@ -109,7 +109,7 @@ def plot_options_tab(tab, parameters) -> dict:
     parameters["show legend"] = left.checkbox("Show plot legend", value=True)
     parameters["save png"] = left.checkbox("Save .png files", value=True)
     parameters["save svg"] = left.checkbox("Save .svg files", value=True)
-    # TODO: implement this different for streamlit ui
+    # TODO: implement this differently for streamlit ui
     parameters["plot windows"] = left.checkbox("Show plots in a window", value=False)
 
     parameters["marker size"] = right.number_input(

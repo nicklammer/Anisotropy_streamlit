@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 
 import tabs
-from scripts.process_data import calculate_anisotropy
+from scripts.process_data import calculate_anisotropy, convert_df_to_dict
 
 st.set_page_config(layout="wide")
 
@@ -14,7 +14,7 @@ def run_analysis():
 parameters = {}
 
 st.title("Analyze Fluorescence Anisotropy")
-st.header("Self fill")
+# st.header("Self fill")
 
 buttons_left, buttons_right = st.columns([0.15, 0.85])
 plot_button = buttons_left.button("Fit and plot", type="primary")
@@ -33,8 +33,6 @@ tabs.plot_options_tab(plot_tab, parameters)
 tabs.style_options_tab(style_tab, parameters)
 
 if plot_button:
-    print(parameters["parallel table"])
-    print(parameters["perpendicular table"])
     
     parameters["parallel table"] = parameters["parallel table"].dropna(axis=1, how="all")
     parameters["parallel table"] = parameters["parallel table"].dropna(axis=0, how="all")
@@ -46,4 +44,8 @@ if plot_button:
     print(parameters["perpendicular table"])
 
     df_results = calculate_anisotropy(parameters["parallel table"], parameters["perpendicular table"])
+    aniso_dict, conc_dict = convert_df_to_dict(df_results, parameters["sample table"], parameters["titration direction"])
+
     print(df_results)
+    print(aniso_dict['sample c'])
+    print(conc_dict['sample c'])
