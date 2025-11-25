@@ -89,3 +89,55 @@ def generate_plot_style_table(sample_names) -> pd.DataFrame:
     plot_style_table = pd.DataFrame.from_dict(table_dict)
 
     return plot_style_table
+
+
+def read_excel_384well_clariostar(input_file):
+    # Function for reading the output of CLARIOstar instruments
+    # I haven't used one of these in a while so this might be outdated
+
+    df_input = pd.read_excel(input_file, names=range(0,25))
+    
+    ROW_IDX = [letter for letter in ascii_uppercase[0:16]]
+
+    COLUMNS = range(1, 25)
+
+    for i, row in df_input.iterrows(): # iterate over each dataframe entry (row) of the excel file
+        table_check = row[1] if type(row[1]) == str else "NA"
+
+        if "parallel" in table_check:
+            start_row = i + 2
+            end_row = start_row + 16
+            start_col = 1
+            num_of_columns = len(COLUMNS)
+
+            df_parallel = excel_pull_table(df_input, start_row, end_row, start_col, num_of_columns)
+
+            df_parallel.columns = COLUMNS
+            df_parallel.set_index(pd.Series(ROW_IDX), inplace=True)
+
+        if "perpendicular" in table_check:
+            start_row = i + 2
+            end_row = start_row + 16
+            start_col = 1
+            num_of_columns = len(COLUMNS)
+
+            df_perpendicular = excel_pull_table(df_input, start_row, end_row, start_col, num_of_columns)
+
+            df_perpendicular.columns = COLUMNS
+            df_perpendicular.set_index(pd.Series(ROW_IDX), inplace=True)
+
+    return df_parallel, df_perpendicular
+
+def excel_pull_table(df_excel, start_row, end_row, start_col, num_of_columns) -> pd.DataFrame:
+    # Given table dimensions and position, subset and return dataframe
+
+    df_rows = df_excel.iloc[start_row:end_row]
+    df_table = df_rows.iloc[:, start_col:num_of_columns + start_col]
+   
+    return df_table
+
+# if __name__ == "__main__":
+#     excel_file = "./FA_data/test2.xlsx"
+#     df_para, df_perp = read_excel_384well_clariostar(excel_file)
+#     print(df_para)
+#     print(df_perp)

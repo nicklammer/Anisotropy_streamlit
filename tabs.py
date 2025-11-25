@@ -4,9 +4,16 @@ import helpers
 
 
 def data_tab_selffill(tab, parameters) -> dict:
+    excel_file = tab.file_uploader("Upload CLARIOstar .xlsx file here (optional)", accept_multiple_files=False, type="xlsx")
+    if excel_file:
+        df_parallel, df_perpendicular = helpers.read_excel_384well_clariostar(excel_file)
+    else:
+        df_parallel = helpers.generate_empty_plate()
+        df_perpendicular = helpers.generate_empty_plate()
+
     tab.write("Parallel fluorescence")
     table_parallel = tab.data_editor(
-        helpers.generate_empty_plate(),
+        df_parallel,
         key="parallel",
         disabled=["_index"],
         column_config=helpers.column_config_data_plate,
@@ -14,7 +21,7 @@ def data_tab_selffill(tab, parameters) -> dict:
 
     tab.write("Perpendicular fluorescence")
     table_perpendicular = tab.data_editor(
-        helpers.generate_empty_plate(),
+        df_perpendicular,
         key="perpendicular",
         disabled=["_index"],
         column_config=helpers.column_config_data_plate,

@@ -6,7 +6,7 @@ import numpy as np
 def calculate_anisotropy(df_parallel, df_perpendicular):
     # Check if both dataframes have the same shape
     if df_parallel.shape != df_perpendicular.shape:
-        raise ValueError("DataFrames must have the same shape.")
+        raise ValueError("Data layout for both tables must match.")
 
     # Define the anisotropy calculation function
     def _anisotropy_equation(parallel_value, perpendicular_value):
@@ -17,9 +17,10 @@ def calculate_anisotropy(df_parallel, df_perpendicular):
     df_anisotropy = pd.DataFrame(
         np.where(none_mask, 
                  _anisotropy_equation(df_parallel, df_perpendicular), 
-                 None),
+                 np.nan),
         index=df_parallel.index,
         columns=df_parallel.columns
     )
 
     return df_anisotropy
+
