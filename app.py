@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 
 import tabs
+from scripts.process_data import calculate_anisotropy
 
 st.set_page_config(layout="wide")
 
@@ -30,3 +31,19 @@ tabs.fit_options_tab(fit_tab, parameters)
 tabs.plot_options_tab(plot_tab, parameters)
 
 tabs.style_options_tab(style_tab, parameters)
+
+if plot_button:
+    print(parameters["parallel table"])
+    print(parameters["perpendicular table"])
+    
+    parameters["parallel table"] = parameters["parallel table"].dropna(axis=1, how="all")
+    parameters["parallel table"] = parameters["parallel table"].dropna(axis=0, how="all")
+
+    parameters["perpendicular table"] = parameters["perpendicular table"].dropna(axis=1, how="all")
+    parameters["perpendicular table"] = parameters["perpendicular table"].dropna(axis=0, how="all")
+
+    print(parameters["parallel table"])
+    print(parameters["perpendicular table"])
+
+    df_results = calculate_anisotropy(parameters["parallel table"], parameters["perpendicular table"])
+    print(df_results)
