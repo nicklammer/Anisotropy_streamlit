@@ -1,17 +1,16 @@
 import streamlit as st
 import pandas as pd
+import tempfile
+import time
 
 import tabs
-from scripts.process_data import calculate_anisotropy, convert_df_to_dict
 
 st.set_page_config(layout="wide")
 
-
-def run_analysis():
-    return NotImplementedError
-
-
-parameters = {}
+data_dict = {}
+fit_dict = {}
+plot_dict = {}
+style_dict = {}
 
 st.title("Analyze Fluorescence Anisotropy")
 # st.header("Self fill")
@@ -24,28 +23,27 @@ data_tab, fit_tab, plot_tab, style_tab = st.tabs(
     ["Data", "Fit options", "Plot options", "Style options"]
 )
 
-tabs.data_tab_selffill(data_tab, parameters)
+tabs.data_tab_selffill(data_tab, data_dict)
 
-tabs.fit_options_tab(fit_tab, parameters)
+tabs.fit_options_tab(fit_tab, fit_dict)
 
-tabs.plot_options_tab(plot_tab, parameters)
+tabs.plot_options_tab(plot_tab, plot_dict)
 
-tabs.style_options_tab(style_tab, parameters)
+tabs.style_options_tab(style_tab, style_dict)
 
-if plot_button:
-    
-    parameters["parallel table"] = parameters["parallel table"].dropna(axis=1, how="all")
-    parameters["parallel table"] = parameters["parallel table"].dropna(axis=0, how="all")
-
-    parameters["perpendicular table"] = parameters["perpendicular table"].dropna(axis=1, how="all")
-    parameters["perpendicular table"] = parameters["perpendicular table"].dropna(axis=0, how="all")
-
-    print(parameters["parallel table"])
-    print(parameters["perpendicular table"])
-
-    df_results = calculate_anisotropy(parameters["parallel table"], parameters["perpendicular table"])
-    aniso_dict, conc_dict = convert_df_to_dict(df_results, parameters["sample table"], parameters["titration direction"])
-
-    print(df_results)
-    print(aniso_dict['sample c'])
-    print(conc_dict['sample c'])
+with tempfile.TemporaryDirectory() as tmpdir:
+    if plot_button:
+        with st.spinner("Processing data...", show_time=True):
+            # for file in encr_logs:
+            #     encrypted_filenames.append(file.name)
+            #     with open(f"{tmpdir}/{file.name}", "wb") as tmp_file:
+            #         tmp_file.write(file.getvalue())
+            # outzip = crypto_main.decrypt_parse_logs(encrypted_filenames, tmpdir,
+            #                                    log_samples, parse_check,
+            #                                    compile_check, segment_logs_check,
+            #                                    keep_logs_check)
+        #     st.success("Done!")
+        # with open(outzip, "rb") as file:
+        #     timestamp = time.strftime("%Y%m%d_%H%M%S")
+        #     st.download_button("Download logs", data=file, on_click='ignore',
+        #                        file_name=f'decrypted_logs_{timestamp}.zip')

@@ -97,9 +97,8 @@ def read_excel_384well_clariostar(input_file) -> tuple:
 
     df_input = pd.read_excel(input_file, names=range(0,25))
     
-    ROW_IDX = [letter for letter in ascii_uppercase[0:16]]
-
-    COLUMNS = range(1, 25)
+    parallel_found = False
+    perpendicular_found = False
 
     for i, row in df_input.iterrows(): # iterate over each dataframe entry (row) of the excel file
 
@@ -107,29 +106,36 @@ def read_excel_384well_clariostar(input_file) -> tuple:
         perpendicular_table = True if "perpendicular" in str(row[1]) else False
 
         if parallel_table:
-            start_row = i + 2
-            end_row = start_row + 16
-            start_col = 1
-            num_of_columns = len(COLUMNS)
-
-            df_parallel = excel_pull_table(df_input, start_row, end_row, start_col, num_of_columns)
-
-            df_parallel.columns = COLUMNS
-            df_parallel.set_index(pd.Series(ROW_IDX), inplace=True)
+            df_parallel = format_384well_table(df_input, i)
+            parallel_found = True
 
         if perpendicular_table:
-            start_row = i + 2
-            end_row = start_row + 16
-            start_col = 1
-            num_of_columns = len(COLUMNS)
+            df_perpendicular = format_384well_table(df_input, i)
+            perpendicular_found = True
 
-            df_perpendicular = excel_pull_table(df_input, start_row, end_row, start_col, num_of_columns)
+    if parallel_found and perpendicular_found:
+        return df_parallel, df_perpendicular
+    
+    else:
+        raise Exception("Input file is missing recognizable parallel or perpendicular table")
 
-            df_perpendicular.columns = COLUMNS
-            df_perpendicular.set_index(pd.Series(ROW_IDX), inplace=True)
+def format_384well_table(df_input, i):
+    # For 384-well plate, get excel table and rename columns and re-index
 
-    return df_parallel, df_perpendicular
+    ROW_IDX = [letter for letter in ascii_uppercase[0:16]]
+    COLUMNS = range(1, 25)
 
+    start_row = i + 2
+    end_row = start_row + 16
+    start_col = 1
+    num_of_columns = len(COLUMNS)
+
+    df_output = excel_pull_table(df_input, start_row, end_row, start_col, num_of_columns)
+
+    df_output.columns = COLUMNS
+    df_output.set_index(pd.Series(ROW_IDX), inplace=True)
+
+    return df_output
 
 def excel_pull_table(df_excel, start_row, end_row, start_col, num_of_columns) -> pd.DataFrame:
     # Given table dimensions and position, subset and return dataframe

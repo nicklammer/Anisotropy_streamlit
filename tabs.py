@@ -3,10 +3,10 @@ import streamlit as st
 import helpers
 
 
-def data_tab_selffill(tab, parameters) -> dict:
+def data_tab_selffill(tab, data_dict) -> dict:
 
     # TODO: make a separate polarization page to simplify processing of data
-    parameters["assay type"] = tab.selectbox(
+    data_dict["assay type"] = tab.selectbox(
         "Anisotropy or polarization?", options=["Anisotropy", "Polarization"]
     )
 
@@ -47,25 +47,25 @@ def data_tab_selffill(tab, parameters) -> dict:
         column_config=helpers.column_config_sample_table,
     )
 
-    parameters["titration direction"] = tab.selectbox(
+    data_dict["titration direction"] = tab.selectbox(
         "Titrated in rows or columns?", options=["Rows", "Columns"]
     )
 
     # Pack up tables
-    parameters["parallel table"] = table_parallel
-    parameters["perpendicular table"] = table_perpendicular
-    parameters["sample table"] = table_samples
-    parameters["sample names"] = table_samples["Sample label"]
+    data_dict["parallel table"] = table_parallel
+    data_dict["perpendicular table"] = table_perpendicular
+    data_dict["sample table"] = table_samples
+    data_dict["sample names"] = table_samples["Sample label"]
 
-    return parameters
+    return data_dict
 
 
-def fit_options_tab(tab, parameters) -> dict:
+def fit_options_tab(tab, fit_dict) -> dict:
 
     left, right = tab.columns(2)
 
     left.write("Select type of fit:")
-    parameters["fit type"] = left.selectbox(
+    fit_dict["fit type"] = left.selectbox(
         "Fit", options=["Simplified binding isotherm",
                         "Quadratic", "Hill fit", "Multi-step"]
     )
@@ -74,79 +74,79 @@ def fit_options_tab(tab, parameters) -> dict:
 
     # Available parameters depend on the fit equation
     # This is kind of like custom components?
-    if parameters["fit type"] == "Multi-step":
-        multi_fit_options(right, parameters)
+    if fit_dict["fit type"] == "Multi-step":
+        multi_fit_options(right, fit_dict)
 
     else:
-        simplified_fit_options(right, parameters)
+        simplified_fit_options(right, fit_dict)
 
-    return parameters
+    return fit_dict
 
 # TODO: display fit equations on page
-def simplified_fit_options(tab_column, parameters):
-    parameters["Kdi"] = tab_column.number_input("Kd")
-    parameters["Si"] = tab_column.number_input("S")
-    parameters["Oi"] = tab_column.number_input("O")
+def simplified_fit_options(tab_column, fit_dict):
+    fit_dict["Kdi"] = tab_column.number_input("Kd")
+    fit_dict["Si"] = tab_column.number_input("S")
+    fit_dict["Oi"] = tab_column.number_input("O")
 
 
-def multi_fit_options(tab_column, parameters):
-    simplified_fit_options(tab_column, parameters)
+def multi_fit_options(tab_column, fit_dict):
+    simplified_fit_options(tab_column, fit_dict)
 
-    parameters["Kd2i"] = tab_column.number_input("Kd2")
-    parameters["S2i"] = tab_column.number_input("S2")
+    fit_dict["Kd2i"] = tab_column.number_input("Kd2")
+    fit_dict["S2i"] = tab_column.number_input("S2")
 
 
-def plot_options_tab(tab, parameters) -> dict:
+def plot_options_tab(tab, plot_dict) -> dict:
 
     left, right = tab.columns(2)
 
-    parameters["plot title"] = left.text_input("Plot title", value="plottitle")
-    parameters["filename"] = left.text_input("Base filename", value="filename")
+    plot_dict["plot title"] = left.text_input("Plot title", value="plottitle")
+    plot_dict["filename"] = left.text_input("Base filename", value="filename")
 
-    parameters["samples per plot"] = left.number_input(
+    plot_dict["samples per plot"] = left.number_input(
         "Number of samples per plot", min_value=1, value=4
     )
-    parameters["show legend"] = left.checkbox("Show plot legend", value=True)
-    parameters["save png"] = left.checkbox("Save .png files", value=True)
-    parameters["save svg"] = left.checkbox("Save .svg files", value=True)
+    plot_dict["show legend"] = left.checkbox("Show plot legend", value=True)
+    plot_dict["save png"] = left.checkbox("Save .png files", value=True)
+    plot_dict["save svg"] = left.checkbox("Save .svg files", value=True)
     # TODO: implement this differently for streamlit ui
-    parameters["plot windows"] = left.checkbox("Show plots in a window", value=False)
+    plot_dict["plot windows"] = left.checkbox("Show plots in a window", value=False)
 
-    parameters["marker size"] = right.number_input(
+    plot_dict["marker size"] = right.number_input(
         "Marker size", min_value=0.1, value=2.0
     )
-    parameters["line width"] = right.number_input(
+    plot_dict["line width"] = right.number_input(
         "Line width", min_value=0.1, value=2.0
     )
-    parameters["plot title size"] = right.number_input(
+    plot_dict["plot title size"] = right.number_input(
         "Plot title font size", min_value=1, value=13
     )
-    parameters["x-axis title size"] = right.number_input(
+    plot_dict["x-axis title size"] = right.number_input(
         "x-axis title font size", min_value=1, value=13
     )
-    parameters["y-axis title size"] = right.number_input(
+    plot_dict["y-axis title size"] = right.number_input(
         "y-axis title font size", min_value=1, value=13
     )
-    parameters["x-tick label size"] = right.number_input(
+    plot_dict["x-tick label size"] = right.number_input(
         "x-tick label font size", min_value=1, value=13
     )
-    parameters["y-tick label size"] = right.number_input(
+    plot_dict["y-tick label size"] = right.number_input(
         "y-tick label font size", min_value=1, value=13
     )
-    parameters["x-tick size"] = right.number_input(
+    plot_dict["x-tick size"] = right.number_input(
         "x-tick font size", min_value=1, value=6
     )
-    parameters["y-tick size"] = right.number_input(
+    plot_dict["y-tick size"] = right.number_input(
         "y-tick font size", min_value=1, value=6
     )
 
-    return parameters
+    return plot_dict
 
 
-def style_options_tab(tab, parameters) -> dict:
+def style_options_tab(tab, style_dict) -> dict:
 
     table_plot_style = tab.data_editor(
-        helpers.generate_plot_style_table(parameters["sample names"]),
+        helpers.generate_plot_style_table(style_dict["sample names"]),
         key="plot_styles",
         hide_index=True,
         num_rows="fixed",
@@ -154,6 +154,6 @@ def style_options_tab(tab, parameters) -> dict:
         disabled=["Sample"],
     )
 
-    parameters["plot style table"] = table_plot_style
+    style_dict["plot style table"] = table_plot_style
 
-    return parameters
+    return style_dict
