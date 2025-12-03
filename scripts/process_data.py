@@ -3,6 +3,12 @@
 import pandas as pd
 import numpy as np
 
+def drop_empty_rows_columns(df_input):
+    df_output = df_input.dropna(axis=1, how="all")
+    df_output = df_output.dropna(axis=0, how="all")
+
+    return df_output
+
 def calculate_anisotropy(df_parallel, df_perpendicular):
     # Check if both dataframes have the same shape
     if df_parallel.shape != df_perpendicular.shape:
@@ -61,6 +67,13 @@ def convert_df_to_dict(df_anisotropy, table_samples, titration_direction) -> tup
         concentration_dict[sample_name] = concentration_row.to_list()
 
     return anisotropy_dict, concentration_dict
+
+
+def fit_plot_anisotropy(data_dict, fit_dict, plot_dict, style_dict):
+    # should this process 1 sample or have a loop integrated?
+
+    # drop columns and rows that only contain NA/None value in input tables
+
 
 def get_titration_indices_row():
     return NotImplementedError

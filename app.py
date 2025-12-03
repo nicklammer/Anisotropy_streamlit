@@ -27,13 +27,14 @@ tabs.data_tab_selffill(data_tab, data_dict)
 
 tabs.fit_options_tab(fit_tab, fit_dict)
 
-tabs.plot_options_tab(plot_tab, plot_dict)
+tabs.plot_options_tab(plot_tab, plot_dict, len(data_dict["sample names"]))
 
-tabs.style_options_tab(style_tab, style_dict)
+tabs.style_options_tab(style_tab, style_dict,
+                       data_dict["sample names"], plot_dict["number of plots"])
 
-with tempfile.TemporaryDirectory() as tmpdir:
-    if plot_button:
-        with st.spinner("Processing data...", show_time=True):
+# with tempfile.TemporaryDirectory() as tmpdir:
+#     if plot_button:
+#         with st.spinner("Processing data...", show_time=True):
             # for file in encr_logs:
             #     encrypted_filenames.append(file.name)
             #     with open(f"{tmpdir}/{file.name}", "wb") as tmp_file:

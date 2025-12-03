@@ -1,5 +1,7 @@
 # Functions for creating tabs. Hopefully keeps page files clean.
 import streamlit as st
+from math import ceil
+
 import helpers
 
 
@@ -96,15 +98,15 @@ def multi_fit_options(tab_column, fit_dict):
     fit_dict["S2i"] = tab_column.number_input("S2")
 
 
-def plot_options_tab(tab, plot_dict) -> dict:
+def plot_options_tab(tab, plot_dict, num_of_samples) -> dict:
 
     left, right = tab.columns(2)
 
     plot_dict["plot title"] = left.text_input("Plot title", value="plottitle")
     plot_dict["filename"] = left.text_input("Base filename", value="filename")
 
-    plot_dict["samples per plot"] = left.number_input(
-        "Number of samples per plot", min_value=1, value=4
+    plot_dict["number of plots"] = left.number_input(
+        "Number of plots to create", min_value=1, value=ceil(num_of_samples/4)
     )
     plot_dict["show legend"] = left.checkbox("Show plot legend", value=True)
     plot_dict["save png"] = left.checkbox("Save .png files", value=True)
@@ -143,14 +145,17 @@ def plot_options_tab(tab, plot_dict) -> dict:
     return plot_dict
 
 
-def style_options_tab(tab, style_dict) -> dict:
+def style_options_tab(tab, style_dict, sample_names,
+                      num_of_plots) -> dict:
+
+    df_style, column_config = helpers.generate_plot_style_table(sample_names, num_of_plots)
 
     table_plot_style = tab.data_editor(
-        helpers.generate_plot_style_table(style_dict["sample names"]),
+        df_style,
         key="plot_styles",
         hide_index=True,
         num_rows="fixed",
-        column_config=helpers.column_config_style_table,
+        column_config=column_config,
         disabled=["Sample"],
     )
 

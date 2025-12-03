@@ -3,22 +3,43 @@
 from . import process_data, fit, plot
 
 
-def process_inputs_anisotropy(parameters):
-    # take parameter dictionary
-    # convert data into useful forms
-    # decide which functions (aniso vs polar)
+def process_anisotropy(data_dict, fit_dict, plot_dict, style_dict, tmpdir):
 
+    data_dict["parallel table"] = process_data.drop_empty_rows_columns(data_dict["parallel table"])
+    data_dict["perpendicular table"] = process_data.drop_empty_rows_columns(data_dict["perpendicular table"])
 
+    df_aniso = process_data.calculate_anisotropy(data_dict["parallel table"], data_dict["perpendicular table"])
+    data_dict["anisotropy"], data_dict["concentration"] = process_data.convert_df_to_dict(
+        df_aniso, data_dict["sample table"], data_dict["titration direction"])
+    
+    # Add ligand concentration to fit_dict for ease of use
+    # fit_dict["ligand concentration"] = dict(zip(
+    #     data_dict["sample table"]["Sample label"],
+    #     data_dict["sample table"]["Ligand concentration"]
+    # ))
 
-def fit_plot_anisotropy(parameters):
-    # should this process 1 sample or have a loop integrated?
+    fit_functions = {
+        "Simplified binding isotherm": fit.getkdfit,
+        "Quadratic": fit.getquadfit,
+        "Hill fit": fit.gethillfit,
+        "Multi-step": fit.getmultifit
+    }
 
-    # drop columns and rows that only contain NA/None value in input tables
-    parameters["parallel table"] = parameters["parallel table"].dropna(axis=1, how="all")
-    parameters["parallel table"] = parameters["parallel table"].dropna(axis=0, how="all")
+    chosen_fit_function = fit_functions[fit_dict["fit type"]]
+    
+    sample_table = data_dict["sample table"]
 
-    parameters["perpendicular table"] = parameters["perpendicular table"].dropna(axis=1, how="all")
-    parameters["perpendicular table"] = parameters["perpendicular table"].dropna(axis=0, how="all")
+    fit_results_dict = {}
 
-    df_aniso = process_data.calculate_anisotropy(parameters["parallel table"], parameters["perpendicular table"])
-    aniso_dict, conc_dict = process_data.convert_df_to_dict(df_aniso, parameters["sample table"], parameters["titration direction"])
+    for i, row in sample_table.iterrows():
+        # Re-package needed info for fitting and plotting
+        # TODO: rewrite this 
+        sample_dict = {}
+        sample_dict["name"] = row["Sample label"]
+        sample_dict["ligand concentration"] = row["Ligand concentration"]
+        sample_dict["units"] = row["Units"]
+
+        sample_dict["concentration"] = data_dict["concentration"][sample_dict["name"]]
+        y = data_dict["anisotropy"][sample_name]
+
+        fit_results_dict[sample_name] = chosen_fit_function(x, y, fit_dict, units)

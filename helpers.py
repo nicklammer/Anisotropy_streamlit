@@ -2,6 +2,7 @@
 import streamlit as st
 import pandas as pd
 from string import ascii_uppercase
+from math import ceil
 
 import plot_styles
 
@@ -20,18 +21,21 @@ column_config_sample_table = {
     "Excluded wells": st.column_config.TextColumn(),
 }
 
-column_config_style_table = {
-    "Sample": st.column_config.TextColumn(),
-    "Color": st.column_config.SelectboxColumn(
-        options=list(plot_styles.color_dict.keys())
-    ),
-    "Marker style": st.column_config.SelectboxColumn(
-        options=list(plot_styles.marker_dict.keys())
-    ),
-    "Line style": st.column_config.SelectboxColumn(
-        options=list(plot_styles.line_dict.keys())
-    ),
-}
+# column config for style table is in the style table function
+
+# def create_column_config_style_table():
+# {
+#     "Sample": st.column_config.TextColumn(),
+#     "Color": st.column_config.SelectboxColumn(
+#         options=list(plot_styles.color_dict.keys())
+#     ),
+#     "Marker style": st.column_config.SelectboxColumn(
+#         options=list(plot_styles.marker_dict.keys())
+#     ),
+#     "Line style": st.column_config.SelectboxColumn(
+#         options=list(plot_styles.line_dict.keys())
+#     ),
+# }
 
 
 def generate_empty_plate() -> pd.DataFrame:
@@ -72,12 +76,25 @@ def generate_sample_table() -> pd.DataFrame:
     return sample_table
 
 
-def generate_plot_style_table(sample_names) -> pd.DataFrame:
+def generate_plot_style_table(sample_names, num_of_plots) -> tuple:
     # Generate table for choosing line and marker styles
 
     color_names = list(plot_styles.color_dict.keys())
     marker_names = list(plot_styles.marker_dict.keys())
     line_names = list(plot_styles.line_dict.keys())
+
+    column_config = {
+        "Sample": st.column_config.TextColumn(),
+        "Color": st.column_config.SelectboxColumn(
+            options=list(plot_styles.color_dict.keys())
+        ),
+        "Marker style": st.column_config.SelectboxColumn(
+            options=list(plot_styles.marker_dict.keys())
+        ),
+        "Line style": st.column_config.SelectboxColumn(
+            options=list(plot_styles.line_dict.keys())
+        ),
+    }
 
     table_dict = {
         "Sample": sample_names,
@@ -86,9 +103,34 @@ def generate_plot_style_table(sample_names) -> pd.DataFrame:
         "Line style": [line_names[1]] * len(sample_names),
     }
 
-    plot_style_table = pd.DataFrame.from_dict(table_dict)
+    column_config["Plot"] = st.column_config.SelectboxColumn(
+            options=list(range(1, num_of_plots + 1))
+            )
 
-    return plot_style_table
+    plot_assignments = []
+    num_assigned = 1
+    plot_id = 1
+    # TODO: I think this is the source of some weirdness
+    samples_per_plot = ceil(len(sample_names)/num_of_plots)
+
+    for i, _ in enumerate(sample_names):
+        if num_assigned <= samples_per_plot:
+            plot_assignments.append(plot_id)
+            num_assigned += 1
+
+        else:
+            plot_id += 1
+            plot_assignments.append(plot_id)
+            num_assigned = 1
+
+    table_dict["Plot"] = plot_assignments
+
+    # TODO: the default numnber of plots is weird. try it out. fix pls
+    # I think it has something to do with 
+
+    df_style = pd.DataFrame.from_dict(table_dict)
+
+    return df_style, column_config
 
 
 def read_excel_384well_clariostar(input_file) -> tuple:
@@ -113,11 +155,12 @@ def read_excel_384well_clariostar(input_file) -> tuple:
             df_perpendicular = format_384well_table(df_input, i)
             perpendicular_found = True
 
+
     if parallel_found and perpendicular_found:
         return df_parallel, df_perpendicular
     
     else:
-        raise Exception("Input file is missing recognizable parallel or perpendicular table")
+        raise Exception("Input file is missing recognizable parallel or perpendicular table.")
 
 def format_384well_table(df_input, i):
     # For 384-well plate, get excel table and rename columns and re-index
