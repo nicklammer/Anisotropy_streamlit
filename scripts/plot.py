@@ -79,3 +79,5 @@ def logplot(x, y, labels, units, y_ax, fits_x, fits_y, param,
 
 def build_fit_table():
     # Put together table for displaying fit parameters
+    # I don't remember what this placeholder is for
+    return None

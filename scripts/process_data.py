@@ -30,17 +30,20 @@ def calculate_anisotropy(df_parallel, df_perpendicular):
 
     return df_anisotropy
 
-def convert_df_to_dict(df_anisotropy, table_samples, titration_direction) -> tuple:
+def convert_df_to_dict(df_anisotropy, table_samples, titration_direction) -> pd.DataFrame:
     # Converts dataframe containing anisotropy data to dictionaries
 
-    concentration_dict = {}
-    anisotropy_dict = {}
+    combined_dict = {
+        "unique name": [],
+        "concentration": [],
+        "anisotropy": []
+    }
 
     # Assume titration in rows for this
     # TODO: This will need cleaning up after i know it works
-    for i, row in table_samples.iterrows():
+    for _, row in table_samples.iterrows():
         # unpack row
-        sample_name = row["Sample label"]
+        unique_name = row["unique name"]
         titration_idx = row["Titration row/column"]
         titration_range = row["Titration range"]
         excluded_wells = row["Excluded wells"]
@@ -63,16 +66,22 @@ def convert_df_to_dict(df_anisotropy, table_samples, titration_direction) -> tup
             anisotropy_row = anisotropy_row.drop(labels=excluded_wells)
             concentration_row = concentration_row.drop(labels=excluded_wells)
 
-        anisotropy_dict[sample_name] = anisotropy_row.to_list()
-        concentration_dict[sample_name] = concentration_row.to_list()
+        combined_dict["unique name"].append(unique_name)
+        combined_dict["concentration"].append(concentration_row.to_list())
+        combined_dict["anisotropy"].append(anisotropy_row.to_list())
+        # anisotropy_dict[unique_name] = anisotropy_row.to_list()
+        # concentration_dict[unique_name] = concentration_row.to_list()
+    
+    df_sample_data = pd.DataFrame.from_dict(combined_dict)
 
-    return anisotropy_dict, concentration_dict
+    return df_sample_data
 
 
 def fit_plot_anisotropy(data_dict, fit_dict, plot_dict, style_dict):
     # should this process 1 sample or have a loop integrated?
 
     # drop columns and rows that only contain NA/None value in input tables
+    return None
 
 
 def get_titration_indices_row():

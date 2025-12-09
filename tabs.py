@@ -53,11 +53,19 @@ def data_tab_selffill(tab, data_dict) -> dict:
         "Titrated in rows or columns?", options=["Rows", "Columns"]
     )
 
+    # Create a unique name column using the dataframe index and sample label
+    sample_names = table_samples["Sample label"]
+    sample_idx = table_samples.index.tolist()
+    new_sample_idx = [
+        f"{str(idx)}_{name}" for idx, name in zip(sample_idx,sample_names)
+    ]
+    table_samples["unique name"] = new_sample_idx
+
     # Pack up tables
     data_dict["parallel table"] = table_parallel
     data_dict["perpendicular table"] = table_perpendicular
     data_dict["sample table"] = table_samples
-    data_dict["sample names"] = table_samples["Sample label"]
+    data_dict["sample names"] = sample_names
 
     return data_dict
 
@@ -145,10 +153,10 @@ def plot_options_tab(tab, plot_dict, num_of_samples) -> dict:
     return plot_dict
 
 
-def style_options_tab(tab, style_dict, sample_names,
-                      num_of_plots) -> dict:
+def style_options_tab(tab, sample_names,
+                      unique_names, num_of_plots) -> dict:
 
-    df_style, column_config = helpers.generate_plot_style_table(sample_names, num_of_plots)
+    df_style, column_config = helpers.generate_plot_style_table(sample_names, unique_names, num_of_plots)
 
     table_plot_style = tab.data_editor(
         df_style,
@@ -159,6 +167,4 @@ def style_options_tab(tab, style_dict, sample_names,
         disabled=["Sample"],
     )
 
-    style_dict["plot style table"] = table_plot_style
-
-    return style_dict
+    return table_plot_style

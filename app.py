@@ -4,13 +4,13 @@ import tempfile
 import time
 
 import tabs
+from scripts import commands
 
 st.set_page_config(layout="wide")
 
 data_dict = {}
 fit_dict = {}
 plot_dict = {}
-style_dict = {}
 
 st.title("Analyze Fluorescence Anisotropy")
 # st.header("Self fill")
@@ -23,17 +23,22 @@ data_tab, fit_tab, plot_tab, style_tab = st.tabs(
     ["Data", "Fit options", "Plot options", "Style options"]
 )
 
-tabs.data_tab_selffill(data_tab, data_dict)
+data_dict = tabs.data_tab_selffill(data_tab, data_dict)
 
-tabs.fit_options_tab(fit_tab, fit_dict)
+fit_dict = tabs.fit_options_tab(fit_tab, fit_dict)
 
-tabs.plot_options_tab(plot_tab, plot_dict, len(data_dict["sample names"]))
+plot_dict = tabs.plot_options_tab(plot_tab,
+                                  plot_dict,
+                                  len(data_dict["sample names"]))
 
-tabs.style_options_tab(style_tab, style_dict,
-                       data_dict["sample names"], plot_dict["number of plots"])
+table_style = tabs.style_options_tab(style_tab,
+                       data_dict["sample table"]["Sample label"],
+                       data_dict["sample table"]["unique name"],
+                       plot_dict["number of plots"])
 
-# with tempfile.TemporaryDirectory() as tmpdir:
-#     if plot_button:
+with tempfile.TemporaryDirectory() as tmpdir:
+    if plot_button:
+        commands.process_anisotropy(data_dict, fit_dict, plot_dict, table_style, tmpdir)
 #         with st.spinner("Processing data...", show_time=True):
             # for file in encr_logs:
             #     encrypted_filenames.append(file.name)

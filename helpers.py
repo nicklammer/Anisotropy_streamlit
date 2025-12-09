@@ -76,7 +76,7 @@ def generate_sample_table() -> pd.DataFrame:
     return sample_table
 
 
-def generate_plot_style_table(sample_names, num_of_plots) -> tuple:
+def generate_plot_style_table(sample_names, unique_names, num_of_plots) -> tuple:
     # Generate table for choosing line and marker styles
 
     color_names = list(plot_styles.color_dict.keys())
@@ -85,6 +85,7 @@ def generate_plot_style_table(sample_names, num_of_plots) -> tuple:
 
     column_config = {
         "Sample": st.column_config.TextColumn(),
+        "unique name": None,
         "Color": st.column_config.SelectboxColumn(
             options=list(plot_styles.color_dict.keys())
         ),
@@ -98,6 +99,7 @@ def generate_plot_style_table(sample_names, num_of_plots) -> tuple:
 
     table_dict = {
         "Sample": sample_names,
+        "unique name": unique_names,
         "Color": color_names[0 : len(sample_names)],
         "Marker style": [marker_names[0]] * len(sample_names),
         "Line style": [line_names[1]] * len(sample_names),
@@ -110,23 +112,23 @@ def generate_plot_style_table(sample_names, num_of_plots) -> tuple:
     plot_assignments = []
     num_assigned = 1
     plot_id = 1
-    # TODO: I think this is the source of some weirdness
+
+    # This is meant to evenly distribute samples between plots
     samples_per_plot = ceil(len(sample_names)/num_of_plots)
 
-    for i, _ in enumerate(sample_names):
+    for _ in sample_names:
+
         if num_assigned <= samples_per_plot:
             plot_assignments.append(plot_id)
-            num_assigned += 1
 
         else:
             plot_id += 1
             plot_assignments.append(plot_id)
             num_assigned = 1
 
-    table_dict["Plot"] = plot_assignments
+        num_assigned += 1
 
-    # TODO: the default numnber of plots is weird. try it out. fix pls
-    # I think it has something to do with 
+    table_dict["Plot"] = plot_assignments
 
     df_style = pd.DataFrame.from_dict(table_dict)
 
