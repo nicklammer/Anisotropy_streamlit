@@ -1,11 +1,16 @@
 # Functions that coordinate processing inputs, fitting, and plotting
 
 import pandas as pd
+import shutil
+import os
 
 from . import process_data, fit, plot
 
 
 def process_anisotropy(data_dict, fit_dict, plot_dict, table_style, tmpdir):
+
+    outdir_plots = f"{tmpdir}/plots"
+    os.makedirs(outdir_plots, exist_ok = True)
 
     data_dict["parallel table"] = process_data.drop_empty_rows_columns(data_dict["parallel table"])
     data_dict["perpendicular table"] = process_data.drop_empty_rows_columns(data_dict["perpendicular table"])
@@ -33,19 +38,52 @@ def process_anisotropy(data_dict, fit_dict, plot_dict, table_style, tmpdir):
 
     chosen_fit_function = fit_functions[fit_dict["fit type"]]
 
-    fit_results_dict = {}
+    # This should be made into a dataframe after the loop below
+    fit_results_dict = {
+        "unique name": [],
+        "x fit": [],
+        "y fit": [],
+        "y norm": [],
+        "parameters": [],
+    }
 
     for i, row in df_all.iterrows():
         # Re-package needed info for fitting and plotting
-        # TODO: rewrite this 
-        # sample_dict = {}
-        # sample_dict["name"] = row["Sample label"]
-        # sample_dict["ligand concentration"] = row["Ligand concentration"]
-        # sample_dict["units"] = row["Units"]
 
-        # sample_dict["concentration"] = row["concentration"]
+        # For the fitting, I think we output a dataframe and merge again
+        # for consistency 
         unique_name = row["unique name"]
         x = row["concentration"]
         y = row["anisotropy"]
 
-        fit_results_dict[unique_name] = chosen_fit_function(x, y, fit_dict, row["units"])
+        x_fit, y_fit, y_norm, parameters_dict = chosen_fit_function(x, y, row["Units"], fit_dict)
+
+        fit_results_dict["unique name"].append(unique_name)
+        fit_results_dict["x fit"].append(x_fit)
+        fit_results_dict["y fit"].append(y_fit)
+        fit_results_dict["y norm"].append(y_norm)
+        fit_results_dict["parameters"].append(parameters_dict)
+
+    df_all = df_all.merge(pd.DataFrame.from_dict(fit_results_dict), on="unique name")
+
+    total_num_plots = max(df_all["Plot"])
+
+    for i in range(1, total_num_plots + 1):
+        # subset df_all using i and Plot column
+        # make plot title using i
+        # need to run plot function
+        # save output to file in tmpdir
+
+        df_subset = df_all[df_all["Plot"] == i]
+        plot_title = f"{plot_dict['plot title']}_{str(i)}"
+        filename = f"{plot_dict['filename']}_{str(i)}"
+        plot.logplot(df_subset, plot_title, filename, plot_dict, outdir_plots)
+
+    zip_path = shutil.make_archive(outdir_plots,
+                                   'zip', outdir_plots)
+
+    return zip_path
+
+
+
+# And then merge fit df into df_all. loop over the number of plots and subset df by plot number

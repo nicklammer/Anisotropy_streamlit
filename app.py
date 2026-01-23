@@ -38,7 +38,7 @@ table_style = tabs.style_options_tab(style_tab,
 
 with tempfile.TemporaryDirectory() as tmpdir:
     if plot_button:
-        commands.process_anisotropy(data_dict, fit_dict, plot_dict, table_style, tmpdir)
+        outzip = commands.process_anisotropy(data_dict, fit_dict, plot_dict, table_style, tmpdir)
 #         with st.spinner("Processing data...", show_time=True):
             # for file in encr_logs:
             #     encrypted_filenames.append(file.name)
@@ -49,7 +49,7 @@ with tempfile.TemporaryDirectory() as tmpdir:
             #                                    compile_check, segment_logs_check,
             #                                    keep_logs_check)
         #     st.success("Done!")
-        # with open(outzip, "rb") as file:
-        #     timestamp = time.strftime("%Y%m%d_%H%M%S")
-        #     st.download_button("Download logs", data=file, on_click='ignore',
-        #                        file_name=f'decrypted_logs_{timestamp}.zip')
+        with open(outzip, "rb") as file:
+            timestamp = time.strftime("%Y%m%d_%H%M%S")
+            st.download_button("Download logs", data=file, on_click='ignore',
+                               file_name=f'plots_{timestamp}.zip')

@@ -23,29 +23,35 @@ def r_squared(y, residuals):
     r_sq = 1-(ss_res/ss_tot)
     return r_sq
 
+def getkdfit(x, y, units, fit_dict):
+    # need to re-write the fitting functions to work with 1 sample at a time
+    parameters_dict = {}
 
-def getkdfit(x, y, p0, units):
-    fits_x = []
-    fits_y = []
-    y_norm = []
-    param_table = [["Kd ("+units+")"],["S"],["O"],["R^2"]]
-    for i in range(len(y)):
-        x[i] = np.array(x[i])
-        y[i] = np.array(y[i])
-        popt, _ = opt.curve_fit(kdfit, x[i], y[i], p0=p0, bounds=((0,0,0),(np.inf,np.inf,np.inf)))
-        fits_x.append(np.geomspace(x[i][len(x[i])-1], x[i][0], 50))   
-        fits_y.append(kdfit(fits_x[i], *popt))
-        #use estimated parameters to normalize anisotropy to be fraction bound
-        y_norm.append((y[i]-popt[2])/popt[1])
-        #calculate R-squared
-        residuals = y[i] - kdfit(x[i], *popt)
-        r_sq = r_squared(y[i], residuals)
-        #format parameters for table
-        param_table[0].append(str(round(popt[0],2)))
-        param_table[1].append(str(round(popt[1],4)))
-        param_table[2].append(str(round(popt[2],4)))
-        param_table[3].append(str(round(r_sq,4)))
-    return fits_x, fits_y, y_norm, param_table
+    p0 = [
+        fit_dict["Kdi"],
+        fit_dict["Si"],
+        fit_dict["Oi"]
+    ]
+
+    popt, _ = opt.curve_fit(kdfit, x, y, p0=p0, bounds=((0,0,0),(np.inf,np.inf,np.inf)))
+
+    x_fit = np.geomspace(x[-1], x[0], 50)
+    y_fit = kdfit(x_fit, *popt)
+
+    # popt[1] is S, popt[2] is O
+    y_norm = (y-popt[2])/popt[1]
+
+    #calculate R-squared
+    residuals = y - kdfit(x, *popt)
+    r_sq = r_squared(y, residuals)
+
+    parameters_dict[f"Kd ({units})"] = str(round(popt[0],2))
+    parameters_dict["S"] = str(round(popt[1],4))
+    parameters_dict["O"] = str(round(popt[2],4))
+    parameters_dict["R^2"] = str(round(r_sq,4))
+
+    return x_fit, y_fit, y_norm, parameters_dict
+
 
 def getquadfit(x, y, ligand, p0, units):
     fits_x = []
