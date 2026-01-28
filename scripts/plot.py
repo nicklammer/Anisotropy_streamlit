@@ -20,12 +20,12 @@ def map_plot_styles(df):
 
     return df
 
-def logplot(df_input, plot_title, filename, plot_dict, tmpdir):
+def logplot(df_input, y_ax, plot_title, filename, plot_dict, tmpdir):
 
     df = df_input.copy()
     df = map_plot_styles(df)
 
-    fig = plt.figure(figsize=(7.0,9.0), dpi=100) #forces figure size and shape 
+    fig = plt.figure(figsize=(7.0,9.0), dpi=200) #forces figure size and shape 
     fig.subplots_adjust(left=0.125, right=0.95, bottom=0.05, top=0.9) #adjusts margins
     ax1 = plt.subplot2grid((6, 1), (0,0), rowspan=4) #subplot for scatter
     table_ax = plt.subplot2grid((6, 1), (5,0)) #subplot for table
@@ -48,8 +48,8 @@ def logplot(df_input, plot_title, filename, plot_dict, tmpdir):
     #labels, font sizes, and tick sizes
 
     # Temp variables
-    y_ax_title = "Anisotropy"
-    units = "nM"
+    y_ax_title = y_ax.capitalize()
+    units = df_input["units"].values[0]
 
     ax1.set_title(plot_title, fontsize=plot_dict["plot title size"])
     ax1.set_ylabel(y_ax_title, fontsize=plot_dict["y-axis title size"])
@@ -69,7 +69,7 @@ def logplot(df_input, plot_title, filename, plot_dict, tmpdir):
     legendicons = []
     for i, row in df.iterrows():
         x = row["concentration"]
-        y = row["anisotropy"]
+        y = row[y_ax]
         x_fit = row["x fit"]
         y_fit = row["y fit"]
         ax1.scatter(x, y, s=20*plot_dict["marker size"], color=row["Color"], marker=row["Marker style"], label=row["Sample label"])
@@ -85,9 +85,10 @@ def logplot(df_input, plot_title, filename, plot_dict, tmpdir):
         plt.savefig(f"{tmpdir}/{filename}.png")
     if plot_dict["save svg"]:
         plt.savefig(f"{tmpdir}/{filename}.svg")
-    #show plot(s) in pop-up window
-    # if showplot == True:
-    #     plt.show(block=False)
+    # show plot(s) in pop-up window
+    showplot = True
+    if showplot == True:
+        plt.show(block=False)
 
 
 

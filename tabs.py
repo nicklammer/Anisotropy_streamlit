@@ -49,6 +49,12 @@ def data_tab_selffill(tab, data_dict) -> dict:
         column_config=helpers.column_config_sample_table,
     )
 
+    data_dict["units"] = tab.selectbox(
+        "Units for concentration (must be same for all samples)",
+        options=["fM", "pM", "nM", "uM", "mM", "M"],
+        index=2
+    )
+
     data_dict["titration direction"] = tab.selectbox(
         "Titrated in rows or columns?", options=["Rows", "Columns"]
     )
@@ -94,16 +100,16 @@ def fit_options_tab(tab, fit_dict) -> dict:
 
 # TODO: display fit equations on page
 def simplified_fit_options(tab_column, fit_dict):
-    fit_dict["Kdi"] = tab_column.number_input("Kd")
-    fit_dict["Si"] = tab_column.number_input("S")
-    fit_dict["Oi"] = tab_column.number_input("O")
+    fit_dict["Kdi"] = tab_column.number_input("Kd", value=50.0)
+    fit_dict["Si"] = tab_column.number_input("S", value=0.1)
+    fit_dict["Oi"] = tab_column.number_input("O", value=0.05)
 
 
 def multi_fit_options(tab_column, fit_dict):
     simplified_fit_options(tab_column, fit_dict)
 
-    fit_dict["Kd2i"] = tab_column.number_input("Kd2")
-    fit_dict["S2i"] = tab_column.number_input("S2")
+    fit_dict["Kd2i"] = tab_column.number_input("Kd2", value=500.0)
+    fit_dict["S2i"] = tab_column.number_input("S2", value=0.15)
 
 
 def plot_options_tab(tab, plot_dict, num_of_samples) -> dict:
@@ -123,31 +129,31 @@ def plot_options_tab(tab, plot_dict, num_of_samples) -> dict:
     plot_dict["plot windows"] = left.checkbox("Show plots in a window", value=False)
 
     plot_dict["marker size"] = right.number_input(
-        "Marker size", min_value=0.1, value=2.0
+        "Marker size", min_value=0.1, value=2., step=0.1
     )
     plot_dict["line width"] = right.number_input(
-        "Line width", min_value=0.1, value=2.0
+        "Line width", min_value=0.1, value=2., step=0.1
     )
     plot_dict["plot title size"] = right.number_input(
-        "Plot title font size", min_value=1, value=13
+        "Plot title font size", min_value=1., value=13., step=0.5
     )
     plot_dict["x-axis title size"] = right.number_input(
-        "x-axis title font size", min_value=1, value=13
+        "x-axis title font size", min_value=1., value=13., step=0.5
     )
     plot_dict["y-axis title size"] = right.number_input(
-        "y-axis title font size", min_value=1, value=13
+        "y-axis title font size", min_value=1., value=13., step=0.5
     )
     plot_dict["x-tick label size"] = right.number_input(
-        "x-tick label font size", min_value=1, value=13
+        "x-tick label font size", min_value=1., value=13., step=0.5
     )
     plot_dict["y-tick label size"] = right.number_input(
-        "y-tick label font size", min_value=1, value=13
+        "y-tick label font size", min_value=1., value=13., step=0.5
     )
     plot_dict["x-tick size"] = right.number_input(
-        "x-tick font size", min_value=1, value=6
+        "x-tick size", min_value=1., value=6., step=0.5
     )
     plot_dict["y-tick size"] = right.number_input(
-        "y-tick font size", min_value=1, value=6
+        "y-tick size", min_value=1., value=6., step=0.5
     )
 
     return plot_dict

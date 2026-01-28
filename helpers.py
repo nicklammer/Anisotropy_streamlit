@@ -67,7 +67,6 @@ def generate_sample_table() -> pd.DataFrame:
         "Starting concentration": empty_column,
         "Dilution factor": empty_column,
         "Ligand concentration": empty_column,
-        "Units": ["nM"],
         "Excluded wells": empty_column,
     }
 
@@ -87,13 +86,13 @@ def generate_plot_style_table(sample_names, unique_names, num_of_plots) -> tuple
         "Sample": st.column_config.TextColumn(),
         "unique name": None,
         "Color": st.column_config.SelectboxColumn(
-            options=list(plot_styles.color_dict.keys())
+            options=color_names
         ),
         "Marker style": st.column_config.SelectboxColumn(
-            options=list(plot_styles.marker_dict.keys())
+            options=marker_names
         ),
         "Line style": st.column_config.SelectboxColumn(
-            options=list(plot_styles.line_dict.keys())
+            options=line_names
         ),
     }
 
