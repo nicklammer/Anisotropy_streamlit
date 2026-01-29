@@ -30,7 +30,8 @@ def calculate_anisotropy(df_parallel, df_perpendicular):
 
     return df_anisotropy
 
-def convert_df_to_dict(df_anisotropy, table_samples, titration_direction) -> pd.DataFrame:
+
+def convert_df_to_dict_anisotropy(df_anisotropy, table_samples, titration_direction) -> pd.DataFrame:
     # Converts dataframe containing anisotropy data to dictionaries
 
     combined_dict = {
@@ -39,50 +40,69 @@ def convert_df_to_dict(df_anisotropy, table_samples, titration_direction) -> pd.
         "anisotropy": []
     }
 
-    # Assume titration in rows for this
-    # TODO: This will need cleaning up after i know it works
+    if titration_direction == "Columns":
+        df_anisotropy = df_anisotropy.T
+
     for _, row in table_samples.iterrows():
-        # unpack row
-        unique_name = row["unique name"]
-        titration_idx = row["Titration row/column"]
-        titration_range = row["Titration range"]
-        excluded_wells = row["Excluded wells"]
-        starting_conc = row["Starting concentration"]
-        dilution_factor = row["Dilution factor"]
+        combined_dict = get_data_over_titration(row, df_anisotropy, combined_dict, titration_direction)
 
-        anisotropy_row = df_anisotropy.loc[titration_idx]
-
-        titration_range = titration_range.split("-")
-        titration_indices = [str(t) for t in range(int(titration_range[0]), int(titration_range[1]) + 1)]
-        anisotropy_row = anisotropy_row.loc[titration_indices]
-
-        concentration_list = [starting_conc / (dilution_factor ** i) for i in range(len(anisotropy_row))]
-        concentration_row = pd.Series(concentration_list, index=anisotropy_row.index)
-
-        if excluded_wells:
-            excluded_wells = excluded_wells.split(",")
-            excluded_wells = [well.strip() for well in excluded_wells]
-
-            anisotropy_row = anisotropy_row.drop(labels=excluded_wells)
-            concentration_row = concentration_row.drop(labels=excluded_wells)
-
-        combined_dict["unique name"].append(unique_name)
-        combined_dict["concentration"].append(concentration_row.to_list())
-        combined_dict["anisotropy"].append(anisotropy_row.to_list())
-        # anisotropy_dict[unique_name] = anisotropy_row.to_list()
-        # concentration_dict[unique_name] = concentration_row.to_list()
-    
     df_sample_data = pd.DataFrame.from_dict(combined_dict)
 
     return df_sample_data
 
 
-def fit_plot_anisotropy(data_dict, fit_dict, plot_dict, style_dict):
-    # should this process 1 sample or have a loop integrated?
+def get_data_over_titration(row, df_anisotropy, combined_dict, titration_direction):
 
-    # drop columns and rows that only contain NA/None value in input tables
-    return None
+    # unpack row
+    unique_name = row["unique name"]
+    titration_idx = row["Titration row/column"]
+    titration_range = row["Titration range"]
+    excluded_wells = row["Excluded wells"]
+    starting_conc = row["Starting concentration"]
+    dilution_factor = row["Dilution factor"]
 
+    anisotropy_row = df_anisotropy.loc[titration_idx]
+
+    titration_range = titration_range.split("-")
+
+    if titration_direction == "Rows":
+        titration_indices = [str(t) for t in range(int(titration_range[0]), int(titration_range[1]) + 1)]
+
+    elif titration_direction == "Columns":
+        column_labels = df_anisotropy.columns.values
+        start_idx = 0
+        end_idx = -1
+        
+        for i, label in enumerate(column_labels):
+
+            if label == titration_range[0]:
+                start_idx = i
+            
+            if label == titration_range[1]:
+                end_idx = i
+
+        titration_indices = column_labels[start_idx:end_idx]
+
+    else:
+        raise Exception("Titration direction is required.")
+
+    anisotropy_row = anisotropy_row.loc[titration_indices]
+
+    concentration_list = [starting_conc / (dilution_factor ** i) for i in range(len(anisotropy_row))]
+    concentration_row = pd.Series(concentration_list, index=anisotropy_row.index)
+
+    if excluded_wells:
+        excluded_wells = excluded_wells.split(",")
+        excluded_wells = [well.strip() for well in excluded_wells]
+
+        anisotropy_row = anisotropy_row.drop(labels=excluded_wells)
+        concentration_row = concentration_row.drop(labels=excluded_wells)
+
+    combined_dict["unique name"].append(unique_name)
+    combined_dict["concentration"].append(concentration_row.to_list())
+    combined_dict["anisotropy"].append(anisotropy_row.to_list())
+
+    return combined_dict
 
 def get_titration_indices_row():
     return NotImplementedError

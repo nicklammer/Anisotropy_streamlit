@@ -16,7 +16,7 @@ def process_anisotropy(data_dict, fit_dict, plot_dict, table_style, tmpdir):
     data_dict["perpendicular table"] = process_data.drop_empty_rows_columns(data_dict["perpendicular table"])
 
     df_aniso = process_data.calculate_anisotropy(data_dict["parallel table"], data_dict["perpendicular table"])
-    df_sample_data = process_data.convert_df_to_dict(
+    df_sample_data = process_data.convert_df_to_dict_anisotropy(
         df_aniso, data_dict["sample table"], data_dict["titration direction"])
     
     # Merge all dataframes
