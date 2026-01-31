@@ -31,81 +31,84 @@ def calculate_anisotropy(df_parallel, df_perpendicular):
     return df_anisotropy
 
 
-def convert_df_to_dict_anisotropy(df_anisotropy, table_samples, titration_direction) -> pd.DataFrame:
-    # Converts dataframe containing anisotropy data to dictionaries
-
-    combined_dict = {
-        "unique name": [],
-        "concentration": [],
-        "anisotropy": []
-    }
-
+def compile_anisotropy(df_anisotropy, table_samples, titration_direction) -> pd.DataFrame:
+    # Compiles anisotropy and concentration data for each sample
+    
+    # Transpose input data if titrations were performed column-wise
     if titration_direction == "Columns":
         df_anisotropy = df_anisotropy.T
 
-    for _, row in table_samples.iterrows():
-        combined_dict = get_data_over_titration(row, df_anisotropy, combined_dict, titration_direction)
-
-    df_sample_data = pd.DataFrame.from_dict(combined_dict)
+    df_sample_data = table_samples.apply(
+        get_data_over_titration,
+        axis=1,
+        args=(df_anisotropy, titration_direction))
 
     return df_sample_data
 
 
-def get_data_over_titration(row, df_anisotropy, combined_dict, titration_direction):
+def get_data_over_titration(row, df_anisotropy, titration_direction):
 
     # unpack row
-    unique_name = row["unique name"]
     titration_idx = row["Titration row/column"]
     titration_range = row["Titration range"]
     excluded_wells = row["Excluded wells"]
     starting_conc = row["Starting concentration"]
     dilution_factor = row["Dilution factor"]
 
+    # get row from input dataframe
     anisotropy_row = df_anisotropy.loc[titration_idx]
 
-    titration_range = titration_range.split("-")
+    # parse titration range
+    titration_range_split = titration_range.split("-")
 
     if titration_direction == "Rows":
-        titration_indices = [str(t) for t in range(int(titration_range[0]), int(titration_range[1]) + 1)]
+        # Row-wise is default and range works for column names
+        titration_indices = get_titration_indices_row(titration_range_split)
 
     elif titration_direction == "Columns":
+        # Column-wise is alt method and requires more work to get a range (because of alphabetical indices)
         column_labels = df_anisotropy.columns.values
-        start_idx = 0
-        end_idx = -1
-        
-        for i, label in enumerate(column_labels):
-
-            if label == titration_range[0]:
-                start_idx = i
-            
-            if label == titration_range[1]:
-                end_idx = i
-
-        titration_indices = column_labels[start_idx:end_idx]
-
+        titration_indices = get_titration_indices_column(titration_range_split, column_labels)
+    # This check should happen in a dedicated input validation function
     else:
         raise Exception("Titration direction is required.")
 
+    # subset row of data using list of column names/indices
     anisotropy_row = anisotropy_row.loc[titration_indices]
 
+    # calculate serial dilution over titration range
     concentration_list = [starting_conc / (dilution_factor ** i) for i in range(len(anisotropy_row))]
+    # create pd.Series to mirror the data row above
     concentration_row = pd.Series(concentration_list, index=anisotropy_row.index)
 
+    # drop excluded wells
     if excluded_wells:
-        excluded_wells = excluded_wells.split(",")
-        excluded_wells = [well.strip() for well in excluded_wells]
+        excluded_wells_list = [well.strip() for well in excluded_wells.split(",")]
+        anisotropy_row = anisotropy_row.drop(labels=excluded_wells_list, errors='ignore')
+        concentration_row = concentration_row.drop(labels=excluded_wells_list, errors='ignore')
 
-        anisotropy_row = anisotropy_row.drop(labels=excluded_wells)
-        concentration_row = concentration_row.drop(labels=excluded_wells)
+    return pd.Series({
+        "unique name": row["unique name"],
+        "concentration": concentration_row.to_list(),
+        "anisotropy": anisotropy_row.to_list()
+    })
 
-    combined_dict["unique name"].append(unique_name)
-    combined_dict["concentration"].append(concentration_row.to_list())
-    combined_dict["anisotropy"].append(anisotropy_row.to_list())
+def get_titration_indices_row(titration_range_split):
 
-    return combined_dict
+    return [str(t) for t in range(int(titration_range_split[0]), int(titration_range_split[1]) + 1)]
 
-def get_titration_indices_row():
-    return NotImplementedError
+def get_titration_indices_column(titration_range_split, column_labels):
 
-def get_titration_indices_column():
-    return NotImplementedError
+    start_idx = 0
+    end_idx = -1
+    
+    for i, label in enumerate(column_labels):
+        # Get alphabet labels, record indices within array of labels
+        if label == titration_range_split[0]:
+            start_idx = i
+        
+        if label == titration_range_split[1]:
+            end_idx = i
+
+    # Get labels required for titration range
+    return column_labels[start_idx:end_idx]

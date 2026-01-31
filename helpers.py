@@ -156,7 +156,6 @@ def read_excel_384well_clariostar(input_file) -> tuple:
             df_perpendicular = format_384well_table(df_input, i)
             perpendicular_found = True
 
-
     if parallel_found and perpendicular_found:
         return df_parallel, df_perpendicular
     

@@ -8,15 +8,47 @@ from scripts import commands
 
 st.set_page_config(layout="wide")
 
+if 'file_bytes' not in st.session_state:
+    st.session_state.file_bytes = None
+if 'file_timestamp' not in st.session_state:
+    st.session_state.file_timestamp = ""
+if 'dl_button_disabled' not in st.session_state:
+    st.session_state.dl_button_disabled = True
+
+def fit_and_plot():
+    with tempfile.TemporaryDirectory() as tmpdir:
+        outzip_path = commands.process_anisotropy(data_dict, fit_dict,
+                                                  plot_dict, table_style,
+                                                  tmpdir)
+
+        with open(outzip_path, "rb") as f:
+            st.session_state.file_bytes = f.read()
+
+    st.session_state.dl_button_disabled = False
+    st.session_state.file_timestamp = time.strftime("%Y%m%d_%H%M%S")
+    st.toast("Plots complete! Ready for download.")
+
 data_dict = {}
 fit_dict = {}
 plot_dict = {}
 
 st.title("Analyze Fluorescence Anisotropy")
-# st.header("Self fill")
 
 buttons_left, buttons_right = st.columns([0.15, 0.85])
-plot_button = buttons_left.button("Fit and plot", type="primary")
+
+plot_button = buttons_left.button("Fit and plot", on_click=fit_and_plot, type="primary")
+
+dl_button = buttons_left.download_button(
+    label="Download plots",
+    data=st.session_state.file_bytes if st.session_state.file_bytes else b"",
+    file_name=f'plots_{st.session_state.file_timestamp}.zip',
+    mime="application/zip",
+    type="primary",
+    disabled=st.session_state.dl_button_disabled
+)
+# TODO: Add function to save and load parameters. Not sure best format. Json?
+# Question to think about is what would people even be saving?
+# Would be like fit eq, initial parameters, plot style options
 save_button = buttons_right.button("Save parameters")
 
 data_tab, fit_tab, plot_tab, style_tab = st.tabs(
@@ -35,21 +67,3 @@ table_style = tabs.style_options_tab(style_tab,
                        data_dict["sample table"]["Sample label"],
                        data_dict["sample table"]["unique name"],
                        plot_dict["number of plots"])
-
-with tempfile.TemporaryDirectory() as tmpdir:
-    if plot_button:
-        outzip = commands.process_anisotropy(data_dict, fit_dict, plot_dict, table_style, tmpdir)
-#         with st.spinner("Processing data...", show_time=True):
-            # for file in encr_logs:
-            #     encrypted_filenames.append(file.name)
-            #     with open(f"{tmpdir}/{file.name}", "wb") as tmp_file:
-            #         tmp_file.write(file.getvalue())
-            # outzip = crypto_main.decrypt_parse_logs(encrypted_filenames, tmpdir,
-            #                                    log_samples, parse_check,
-            #                                    compile_check, segment_logs_check,
-            #                                    keep_logs_check)
-        #     st.success("Done!")
-        with open(outzip, "rb") as file:
-            timestamp = time.strftime("%Y%m%d_%H%M%S")
-            st.download_button("Download logs", data=file, on_click='ignore',
-                               file_name=f'plots_{timestamp}.zip')

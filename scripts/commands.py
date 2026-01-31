@@ -16,7 +16,7 @@ def process_anisotropy(data_dict, fit_dict, plot_dict, table_style, tmpdir):
     data_dict["perpendicular table"] = process_data.drop_empty_rows_columns(data_dict["perpendicular table"])
 
     df_aniso = process_data.calculate_anisotropy(data_dict["parallel table"], data_dict["perpendicular table"])
-    df_sample_data = process_data.convert_df_to_dict_anisotropy(
+    df_sample_data = process_data.compile_anisotropy(
         df_aniso, data_dict["sample table"], data_dict["titration direction"])
     
     # Merge all dataframes
@@ -26,24 +26,16 @@ def process_anisotropy(data_dict, fit_dict, plot_dict, table_style, tmpdir):
     # Add units to data df
     df_all["units"] = data_dict["units"]
 
-    # Add ligand concentration to fit_dict for ease of use
-    # fit_dict["ligand concentration"] = dict(zip(
-    #     data_dict["sample table"]["Sample label"],
-    #     data_dict["sample table"]["Ligand concentration"]
-    # ))
+    # Fit data and merge with df_all
+    df_fit_results = fit_data(df_all, fit_dict, "anisotropy")
 
-    fit_results_dict = fit_data(df_all, fit_dict, "anisotropy")
-
-    df_all = df_all.merge(pd.DataFrame.from_dict(fit_results_dict), on="unique name")
+    df_all = df_all.merge(df_fit_results, on="unique name")
 
     total_num_plots = max(df_all["Plot"])
 
     for i in range(1, total_num_plots + 1):
-        # subset df_all using i and Plot column
-        # make plot title using i
-        # need to run plot function
-        # save output to file in tmpdir
 
+        # subset data by plot groupings
         df_subset = df_all[df_all["Plot"] == i]
         plot_title = f"{plot_dict['plot title']}_{str(i)}"
         filename = f"{plot_dict['filename']}_{str(i)}"
@@ -56,41 +48,37 @@ def process_anisotropy(data_dict, fit_dict, plot_dict, table_style, tmpdir):
 
 
 
-def fit_data(df_all, fit_dict, y_type):
+def fit_data(df_all, fit_dict, y_type) -> pd.DataFrame:
 
     fit_functions = {
-        "Simplified binding isotherm": fit.getkdfit,
-        "Quadratic": fit.getquadfit,
-        "Hill fit": fit.gethillfit,
-        "Multi-step": fit.getmultifit
+        "Simplified binding isotherm": fit.get_simple_fit,
+        "Quadratic": fit.get_quad_fit,
+        "Hill fit": fit.get_hill_fit,
+        "Multi-step": fit.get_multi_fit
     }
 
     chosen_fit_function = fit_functions[fit_dict["fit type"]]
 
-    # This should be made into a dataframe after the loop below
-    fit_results_dict = {
-        "unique name": [],
-        "x fit": [],
-        "y fit": [],
-        "y norm": [],
-        "parameters": [],
-    }
+    def _fit_by_row(row):
 
-    for i, row in df_all.iterrows():
-        # Re-package needed info for fitting and plotting
+        fit_function_args = {
+            "x": row["concentration"],
+            "y": row[y_type],
+            "units": row["units"],
+            "fit_dict": fit_dict,
+            "ligand_conc": row.get("Ligand concentration") # just to be safe use .get
+        }
 
-        # For the fitting, I think we output a dataframe and merge again
-        # for consistency 
-        unique_name = row["unique name"]
-        x = row["concentration"]
-        y = row[y_type]
+        x_fit, y_fit, y_norm, fit_params = chosen_fit_function(**fit_function_args)
 
-        x_fit, y_fit, y_norm, parameters_dict = chosen_fit_function(x, y, row["units"], fit_dict)
+        return pd.Series({
+            "unique name": row["unique name"],
+            "x fit": x_fit,
+            "y fit": y_fit,
+            "y norm": y_norm,
+            "parameters": fit_params,
+        })
 
-        fit_results_dict["unique name"].append(unique_name)
-        fit_results_dict["x fit"].append(x_fit)
-        fit_results_dict["y fit"].append(y_fit)
-        fit_results_dict["y norm"].append(y_norm)
-        fit_results_dict["parameters"].append(parameters_dict)
+    df_fit_results = df_all.apply(_fit_by_row, axis=1)
 
-    return fit_results_dict
+    return df_fit_results

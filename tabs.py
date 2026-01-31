@@ -92,6 +92,9 @@ def fit_options_tab(tab, fit_dict) -> dict:
     # This is kind of like custom components?
     if fit_dict["fit type"] == "Multi-step":
         multi_fit_options(right, fit_dict)
+    
+    elif fit_dict["fit type"] == "Hill fit":
+        hill_fit_options(right, fit_dict)
 
     else:
         simplified_fit_options(right, fit_dict)
@@ -104,6 +107,10 @@ def simplified_fit_options(tab_column, fit_dict):
     fit_dict["Si"] = tab_column.number_input("S", value=0.1)
     fit_dict["Oi"] = tab_column.number_input("O", value=0.05)
 
+def hill_fit_options(tab_column, fit_dict):
+    simplified_fit_options(tab_column, fit_dict)
+
+    fit_dict["ni"] = tab_column.number_input("n", value=1.0)
 
 def multi_fit_options(tab_column, fit_dict):
     simplified_fit_options(tab_column, fit_dict)
