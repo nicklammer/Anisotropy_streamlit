@@ -91,33 +91,56 @@ def fit_options_tab(tab, fit_dict) -> dict:
     # Available parameters depend on the fit equation
     # This is kind of like custom components?
     if fit_dict["fit type"] == "Multi-step":
-        multi_fit_options(right, fit_dict)
+        multi_fit_options(left, right, fit_dict)
     
     elif fit_dict["fit type"] == "Hill fit":
-        hill_fit_options(right, fit_dict)
+        hill_fit_options(left, right, fit_dict)
 
     else:
-        simplified_fit_options(right, fit_dict)
+        simplified_fit_options(left, right, fit_dict)
+
+    display_fit_equation(left, fit_dict["fit type"])
 
     return fit_dict
 
 # TODO: display fit equations on page
-def simplified_fit_options(tab_column, fit_dict):
-    fit_dict["Kdi"] = tab_column.number_input("Kd", value=50.0)
-    fit_dict["Si"] = tab_column.number_input("S", value=0.1)
-    fit_dict["Oi"] = tab_column.number_input("O", value=0.05)
+def simplified_fit_options(left, right, fit_dict):
 
-def hill_fit_options(tab_column, fit_dict):
-    simplified_fit_options(tab_column, fit_dict)
+    fit_dict["Kdi"] = right.number_input("Kd", value=50.0)
+    fit_dict["Si"] = right.number_input("S", value=0.1)
+    fit_dict["Oi"] = right.number_input("O", value=0.05)
 
-    fit_dict["ni"] = tab_column.number_input("n", value=1.0)
+def hill_fit_options(left, right, fit_dict):
+    simplified_fit_options(left, right, fit_dict)
 
-def multi_fit_options(tab_column, fit_dict):
-    simplified_fit_options(tab_column, fit_dict)
+    fit_dict["ni"] = right.number_input("n", value=1.0)
 
-    fit_dict["Kd2i"] = tab_column.number_input("Kd2", value=500.0)
-    fit_dict["S2i"] = tab_column.number_input("S2", value=0.15)
+def multi_fit_options(left, right, fit_dict):
+    simplified_fit_options(left, right, fit_dict)
 
+    fit_dict["Kd2i"] = right.number_input("Kd2", value=500.0)
+    fit_dict["S2i"] = right.number_input("S2", value=0.15)
+
+def display_fit_equation(left, fit_type):
+
+    fit_equations_latex = {
+        "Simplified binding isotherm": r'''
+                y = S\left ( \frac{x}{x + K_{D}} \right )+ O
+                ''',
+        "Quadratic": r'''
+                y = S\left ( \frac{x + L + K_{D}-\sqrt{\left ( x + L + K_{D} \right )^{2}-\left ( 4*x*L \right )}}{2*L} \right )+ O
+                ''',
+        "Hill fit": r'''
+                y = S\left ( \frac{x^{n}}{x^{n} + K_{D}^{n}} \right )+ O
+                ''',
+        "Multi-step": r'''
+                y = S_{1}\left ( \frac{x}{x + K_{D1}} \right )+S_{2}\left ( \frac{x}{x + K_{D2}} \right )+ O
+                '''
+    }
+
+    chosen_fit_latex = fit_equations_latex[fit_type]
+
+    left.latex(chosen_fit_latex)
 
 def plot_options_tab(tab, plot_dict, num_of_samples) -> dict:
 
@@ -129,11 +152,12 @@ def plot_options_tab(tab, plot_dict, num_of_samples) -> dict:
     plot_dict["number of plots"] = left.number_input(
         "Number of plots to create", min_value=1, value=ceil(num_of_samples/4)
     )
+    plot_dict["normalized"] = left.checkbox("Generate normalized plots", value=True)
     plot_dict["show legend"] = left.checkbox("Show plot legend", value=True)
     plot_dict["save png"] = left.checkbox("Save .png files", value=True)
     plot_dict["save svg"] = left.checkbox("Save .svg files", value=True)
     # TODO: implement this differently for streamlit ui
-    plot_dict["plot windows"] = left.checkbox("Show plots in a window", value=False)
+    plot_dict["show plots"] = left.checkbox("Show plots in a window", value=False)
 
     plot_dict["marker size"] = right.number_input(
         "Marker size", min_value=0.1, value=2., step=0.1
@@ -181,3 +205,19 @@ def style_options_tab(tab, sample_names,
     )
 
     return table_plot_style
+
+
+def plot_view_tab(tab, plot_list):
+
+    if not plot_list:
+        tab.write("Nothing plotted")
+
+    left, right = tab.columns(2)
+    left_col = True
+    for fig in plot_list:
+        if left_col:
+            left.pyplot(fig)
+            left_col = False
+        else:
+            right.pyplot(fig)
+            left_col = True

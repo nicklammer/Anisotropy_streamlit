@@ -14,12 +14,16 @@ if 'file_timestamp' not in st.session_state:
     st.session_state.file_timestamp = ""
 if 'dl_button_disabled' not in st.session_state:
     st.session_state.dl_button_disabled = True
+if 'plot_list' not in st.session_state:
+    st.session_state.plot_list = []
 
 def fit_and_plot():
     with tempfile.TemporaryDirectory() as tmpdir:
-        outzip_path = commands.process_anisotropy(data_dict, fit_dict,
+        outzip_path, plot_list = commands.process_anisotropy(data_dict, fit_dict,
                                                   plot_dict, table_style,
                                                   tmpdir)
+
+        st.session_state.plot_list = plot_list
 
         with open(outzip_path, "rb") as f:
             st.session_state.file_bytes = f.read()
@@ -51,8 +55,8 @@ dl_button = buttons_left.download_button(
 # Would be like fit eq, initial parameters, plot style options
 save_button = buttons_right.button("Save parameters")
 
-data_tab, fit_tab, plot_tab, style_tab = st.tabs(
-    ["Data", "Fit options", "Plot options", "Style options"]
+data_tab, fit_tab, plot_tab, style_tab, view_tab = st.tabs(
+    ["Data", "Fit options", "Plot options", "Style options", "Plot view"]
 )
 
 data_dict = tabs.data_tab_selffill(data_tab, data_dict)
@@ -67,3 +71,5 @@ table_style = tabs.style_options_tab(style_tab,
                        data_dict["sample table"]["Sample label"],
                        data_dict["sample table"]["unique name"],
                        plot_dict["number of plots"])
+
+tabs.plot_view_tab(view_tab, st.session_state.plot_list)

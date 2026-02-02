@@ -33,18 +33,33 @@ def process_anisotropy(data_dict, fit_dict, plot_dict, table_style, tmpdir):
 
     total_num_plots = max(df_all["Plot"])
 
+    plot_list = []
+
     for i in range(1, total_num_plots + 1):
 
         # subset data by plot groupings
         df_subset = df_all[df_all["Plot"] == i]
-        plot_title = f"{plot_dict['plot title']}_{str(i)}"
+        plot_title = f"{plot_dict['plot title']} {str(i)}"
         filename = f"{plot_dict['filename']}_{str(i)}"
 
-        plot.logplot(df_subset, "anisotropy", plot_title, filename, plot_dict, outdir_plots)
+        plot_current = plot.logplot(df_subset, "anisotropy", plot_title,
+                                    filename, plot_dict, outdir_plots,
+                                    normalized=False)
+        plot_list.append(plot_current)
+
+        if plot_dict["normalized"]:
+
+            plot_title = f"{plot_dict['plot title']} {str(i)} Normalized"
+            filename = f"{plot_dict['filename']}_normalized_{str(i)}"
+            
+            plot_normalized = plot.logplot(df_subset, "Fraction bound", plot_title,
+                                           filename, plot_dict, outdir_plots,
+                                           normalized=True)
+            plot_list.append(plot_normalized)
 
     zip_path = shutil.make_archive(outdir_plots, 'zip', outdir_plots)
 
-    return zip_path
+    return zip_path, plot_list
 
 
 
@@ -69,14 +84,15 @@ def fit_data(df_all, fit_dict, y_type) -> pd.DataFrame:
             "ligand_conc": row.get("Ligand concentration") # just to be safe use .get
         }
 
-        x_fit, y_fit, y_norm, fit_params = chosen_fit_function(**fit_function_args)
+        x_fit, y_fit, y_norm, y_fit_norm, fit_params = chosen_fit_function(**fit_function_args)
 
         return pd.Series({
             "unique name": row["unique name"],
             "x fit": x_fit,
             "y fit": y_fit,
             "y norm": y_norm,
-            "parameters": fit_params,
+            "y fit norm": y_fit_norm,
+            "parameters": fit_params
         })
 
     df_fit_results = df_all.apply(_fit_by_row, axis=1)

@@ -9,6 +9,7 @@ def simplified(P, Kd, S, O):
 def quad(P, Kd, S, O, L): # in this form, L refers to the ligand held at constant concentration
     a = P+L+Kd
     return S*((a-(((a**2)-(4*P*L))**0.5))/(2*L))+O
+    # return S*(((P+L+Kd)-((((P+L+Kd)**2)-(4*P*L))**0.5))/(2*L))+O
 
 def hill(P, Kd, S, O, n):
     return	S*((P**(n)/((P**(n)+(Kd**(n))))))+O
@@ -22,6 +23,10 @@ def r_squared(y, residuals):
     ss_tot = np.sum((y-np.mean(y))**2)
     r_sq = 1-(ss_res/ss_tot)
     return r_sq
+
+def normalize_y(y, S, O):
+    return (y - O) / S
+
 
 def get_simple_fit(x, y, units, fit_dict, **kwargs):
 
@@ -39,7 +44,9 @@ def get_simple_fit(x, y, units, fit_dict, **kwargs):
     y_fit = simplified(x_fit, *popt)
 
     # popt[1] is S, popt[2] is O
-    y_norm = (y - popt[2]) / popt[1]
+    # y_norm = (y - popt[2]) / popt[1]
+    y_norm = [normalize_y(yi, popt[1], popt[2]) for yi in y]
+    y_fit_norm = [normalize_y(yi, popt[1], popt[2]) for yi in y_fit]
 
     #calculate R-squared
     residuals = y - simplified(x, *popt)
@@ -50,7 +57,7 @@ def get_simple_fit(x, y, units, fit_dict, **kwargs):
     fit_params["O"] = str(round(popt[2],4))
     fit_params["R^2"] = str(round(r_sq,4))
 
-    return x_fit, y_fit, y_norm, fit_params
+    return x_fit, y_fit, y_norm, y_fit_norm, fit_params
 
 
 def get_quad_fit(x, y, units, fit_dict, ligand_conc=None, **kwargs):
@@ -71,9 +78,14 @@ def get_quad_fit(x, y, units, fit_dict, ligand_conc=None, **kwargs):
     y_fit = quad(x_fit, popt[0], popt[1], popt[2], ligand_conc)
 
     # popt[1] is S, popt[2] is O
-    y_norm = (y - popt[2]) / popt[1]
+    # y_norm = (y - popt[2]) / popt[1]
+    y_norm = [normalize_y(yi, popt[1], popt[2]) for yi in y]
+    y_fit_norm = [normalize_y(yi, popt[1], popt[2]) for yi in y_fit]
 
     #calculate R-squared
+    # TODO: Error here
+        # a = P+L+Kd
+        # TypeError: can only concatenate list (not "int") to list
     residuals = y - quad(x, popt[0], popt[1], popt[2], ligand_conc)
     r_sq = r_squared(y, residuals)
 
@@ -82,7 +94,7 @@ def get_quad_fit(x, y, units, fit_dict, ligand_conc=None, **kwargs):
     fit_params["O"] = str(round(popt[2],4))
     fit_params["R^2"] = str(round(r_sq,4))
 
-    return x_fit, y_fit, y_norm, fit_params
+    return x_fit, y_fit, y_norm, y_fit_norm, fit_params
 
 def get_hill_fit(x, y, units, fit_dict, **kwargs):
 
@@ -101,7 +113,9 @@ def get_hill_fit(x, y, units, fit_dict, **kwargs):
     y_fit = hill(x_fit, *popt)
 
     # popt[1] is S, popt[2] is O
-    y_norm = (y - popt[2]) / popt[1]
+    # y_norm = (y - popt[2]) / popt[1]
+    y_norm = [normalize_y(yi, popt[1], popt[2]) for yi in y]
+    y_fit_norm = [normalize_y(yi, popt[1], popt[2]) for yi in y_fit]
 
     #calculate R-squared
     residuals = y - hill(x, *popt)
@@ -113,7 +127,7 @@ def get_hill_fit(x, y, units, fit_dict, **kwargs):
     fit_params["O"] = str(round(popt[2],4))
     fit_params["R^2"] = str(round(r_sq,4))
 
-    return x_fit, y_fit, y_norm, fit_params
+    return x_fit, y_fit, y_norm, y_fit_norm, fit_params
 
 def get_multi_fit(x, y, units, fit_dict, **kwargs):
 
@@ -133,7 +147,9 @@ def get_multi_fit(x, y, units, fit_dict, **kwargs):
     y_fit = multi(x_fit, *popt)
 
     # popt[2] is S, popt[3] is S2, popt[4] is O
-    y_norm = (y - popt[4]) / (popt[2] + popt[3])
+    # y_norm = (y - popt[4]) / (popt[2] + popt[3])
+    y_norm = [normalize_y(yi, (popt[2] + popt[3]), popt[4]) for yi in y]
+    y_fit_norm = [normalize_y(yi, (popt[2] + popt[3]), popt[4]) for yi in y_fit]
 
     #calculate R-squared
     residuals = y - multi(x, *popt)
@@ -146,4 +162,4 @@ def get_multi_fit(x, y, units, fit_dict, **kwargs):
     fit_params["O"] = str(round(popt[4],4))
     fit_params["R^2"] = str(round(r_sq,4))
 
-    return x_fit, y_fit, y_norm, fit_params
+    return x_fit, y_fit, y_norm, y_fit_norm, fit_params
