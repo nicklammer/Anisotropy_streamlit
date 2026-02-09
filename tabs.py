@@ -1,5 +1,6 @@
 # Functions for creating tabs. Hopefully keeps page files clean.
 import streamlit as st
+import pandas as pd
 from math import ceil
 
 import helpers
@@ -12,10 +13,16 @@ def data_tab_selffill(tab, data_dict) -> dict:
         "Anisotropy or polarization?", options=["Anisotropy", "Polarization"]
     )
 
-    excel_file = tab.file_uploader("Upload CLARIOstar .xlsx file here (optional)", accept_multiple_files=False, type="xlsx")
+    excel_file = tab.file_uploader(
+        "Upload CLARIOstar .xlsx file here (optional)",
+        accept_multiple_files=False,
+        type="xlsx",
+    )
 
     if excel_file:
-        df_parallel, df_perpendicular = helpers.read_excel_384well_clariostar(excel_file)
+        df_parallel, df_perpendicular = helpers.read_excel_384well_clariostar(
+            excel_file
+        )
     else:
         df_parallel = helpers.generate_empty_plate()
         df_perpendicular = helpers.generate_empty_plate()
@@ -52,7 +59,7 @@ def data_tab_selffill(tab, data_dict) -> dict:
     data_dict["units"] = tab.selectbox(
         "Units for concentration (must be same for all samples)",
         options=["fM", "pM", "nM", "uM", "mM", "M"],
-        index=2
+        index=2,
     )
 
     data_dict["titration direction"] = tab.selectbox(
@@ -63,7 +70,7 @@ def data_tab_selffill(tab, data_dict) -> dict:
     sample_names = table_samples["Sample label"]
     sample_idx = table_samples.index.tolist()
     new_sample_idx = [
-        f"{str(idx)}_{name}" for idx, name in zip(sample_idx,sample_names)
+        f"{str(idx)}_{name}" for idx, name in zip(sample_idx, sample_names)
     ]
     table_samples["unique name"] = new_sample_idx
 
@@ -82,8 +89,8 @@ def fit_options_tab(tab, fit_dict) -> dict:
 
     left.write("Select type of fit:")
     fit_dict["fit type"] = left.selectbox(
-        "Fit", options=["Simplified binding isotherm",
-                        "Quadratic", "Hill fit", "Multi-step"]
+        "Fit",
+        options=["Simplified binding isotherm", "Quadratic", "Hill fit", "Multi-step"],
     )
 
     right.write("Initial parameters:")
@@ -92,7 +99,7 @@ def fit_options_tab(tab, fit_dict) -> dict:
     # This is kind of like custom components?
     if fit_dict["fit type"] == "Multi-step":
         multi_fit_options(left, right, fit_dict)
-    
+
     elif fit_dict["fit type"] == "Hill fit":
         hill_fit_options(left, right, fit_dict)
 
@@ -103,6 +110,7 @@ def fit_options_tab(tab, fit_dict) -> dict:
 
     return fit_dict
 
+
 # TODO: display fit equations on page
 def simplified_fit_options(left, right, fit_dict):
 
@@ -110,10 +118,12 @@ def simplified_fit_options(left, right, fit_dict):
     fit_dict["Si"] = right.number_input("S", value=0.1)
     fit_dict["Oi"] = right.number_input("O", value=0.05)
 
+
 def hill_fit_options(left, right, fit_dict):
     simplified_fit_options(left, right, fit_dict)
 
     fit_dict["ni"] = right.number_input("n", value=1.0)
+
 
 def multi_fit_options(left, right, fit_dict):
     simplified_fit_options(left, right, fit_dict)
@@ -121,26 +131,28 @@ def multi_fit_options(left, right, fit_dict):
     fit_dict["Kd2i"] = right.number_input("Kd2", value=500.0)
     fit_dict["S2i"] = right.number_input("S2", value=0.15)
 
+
 def display_fit_equation(left, fit_type):
 
     fit_equations_latex = {
-        "Simplified binding isotherm": r'''
+        "Simplified binding isotherm": r"""
                 y = S\left ( \frac{x}{x + K_{D}} \right )+ O
-                ''',
-        "Quadratic": r'''
+                """,
+        "Quadratic": r"""
                 y = S\left ( \frac{x + L + K_{D}-\sqrt{\left ( x + L + K_{D} \right )^{2}-\left ( 4*x*L \right )}}{2*L} \right )+ O
-                ''',
-        "Hill fit": r'''
+                """,
+        "Hill fit": r"""
                 y = S\left ( \frac{x^{n}}{x^{n} + K_{D}^{n}} \right )+ O
-                ''',
-        "Multi-step": r'''
+                """,
+        "Multi-step": r"""
                 y = S_{1}\left ( \frac{x}{x + K_{D1}} \right )+S_{2}\left ( \frac{x}{x + K_{D2}} \right )+ O
-                '''
+                """,
     }
 
     chosen_fit_latex = fit_equations_latex[fit_type]
 
     left.latex(chosen_fit_latex)
+
 
 def plot_options_tab(tab, plot_dict, num_of_samples) -> dict:
 
@@ -150,50 +162,51 @@ def plot_options_tab(tab, plot_dict, num_of_samples) -> dict:
     plot_dict["filename"] = left.text_input("Base filename", value="filename")
 
     plot_dict["number of plots"] = left.number_input(
-        "Number of plots to create", min_value=1, value=ceil(num_of_samples/4)
+        "Number of plots to create", min_value=1, value=ceil(num_of_samples / 4)
     )
     plot_dict["normalized"] = left.checkbox("Generate normalized plots", value=True)
     plot_dict["show legend"] = left.checkbox("Show plot legend", value=True)
     plot_dict["save png"] = left.checkbox("Save .png files", value=True)
     plot_dict["save svg"] = left.checkbox("Save .svg files", value=True)
-    # TODO: implement this differently for streamlit ui
-    plot_dict["show plots"] = left.checkbox("Show plots in a window", value=False)
+    # TODO: is this flag ever needed
+    # plot_dict["show plots"] = left.checkbox("Show plots in a window", value=False)
 
     plot_dict["marker size"] = right.number_input(
-        "Marker size", min_value=0.1, value=2., step=0.1
+        "Marker size", min_value=0.1, value=2.0, step=0.1
     )
     plot_dict["line width"] = right.number_input(
-        "Line width", min_value=0.1, value=2., step=0.1
+        "Line width", min_value=0.1, value=2.0, step=0.1
     )
     plot_dict["plot title size"] = right.number_input(
-        "Plot title font size", min_value=1., value=13., step=0.5
+        "Plot title font size", min_value=1.0, value=13.0, step=0.5
     )
     plot_dict["x-axis title size"] = right.number_input(
-        "x-axis title font size", min_value=1., value=13., step=0.5
+        "x-axis title font size", min_value=1.0, value=13.0, step=0.5
     )
     plot_dict["y-axis title size"] = right.number_input(
-        "y-axis title font size", min_value=1., value=13., step=0.5
+        "y-axis title font size", min_value=1.0, value=13.0, step=0.5
     )
     plot_dict["x-tick label size"] = right.number_input(
-        "x-tick label font size", min_value=1., value=13., step=0.5
+        "x-tick label font size", min_value=1.0, value=13.0, step=0.5
     )
     plot_dict["y-tick label size"] = right.number_input(
-        "y-tick label font size", min_value=1., value=13., step=0.5
+        "y-tick label font size", min_value=1.0, value=13.0, step=0.5
     )
     plot_dict["x-tick size"] = right.number_input(
-        "x-tick size", min_value=1., value=6., step=0.5
+        "x-tick size", min_value=1.0, value=6.0, step=0.5
     )
     plot_dict["y-tick size"] = right.number_input(
-        "y-tick size", min_value=1., value=6., step=0.5
+        "y-tick size", min_value=1.0, value=6.0, step=0.5
     )
 
     return plot_dict
 
 
-def style_options_tab(tab, sample_names,
-                      unique_names, num_of_plots) -> dict:
+def style_options_tab(tab, sample_names, unique_names, num_of_plots) -> pd.DataFrame:
 
-    df_style, column_config = helpers.generate_plot_style_table(sample_names, unique_names, num_of_plots)
+    df_style, column_config = helpers.generate_plot_style_table(
+        sample_names, unique_names, num_of_plots
+    )
 
     table_plot_style = tab.data_editor(
         df_style,

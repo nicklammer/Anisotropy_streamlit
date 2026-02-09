@@ -58,7 +58,7 @@ def generate_empty_plate() -> pd.DataFrame:
 def generate_sample_table() -> pd.DataFrame:
     # Generate sample info table
 
-    empty_column = [None] #* number_of_samples
+    empty_column = [None]  # * number_of_samples
 
     table_dict = {
         "Sample label": empty_column,
@@ -85,15 +85,9 @@ def generate_plot_style_table(sample_names, unique_names, num_of_plots) -> tuple
     column_config = {
         "Sample": st.column_config.TextColumn(),
         "unique name": None,
-        "Color": st.column_config.SelectboxColumn(
-            options=color_names
-        ),
-        "Marker style": st.column_config.SelectboxColumn(
-            options=marker_names
-        ),
-        "Line style": st.column_config.SelectboxColumn(
-            options=line_names
-        ),
+        "Color": st.column_config.SelectboxColumn(options=color_names),
+        "Marker style": st.column_config.SelectboxColumn(options=marker_names),
+        "Line style": st.column_config.SelectboxColumn(options=line_names),
     }
 
     table_dict = {
@@ -105,15 +99,15 @@ def generate_plot_style_table(sample_names, unique_names, num_of_plots) -> tuple
     }
 
     column_config["Plot"] = st.column_config.SelectboxColumn(
-            options=list(range(1, num_of_plots + 1))
-            )
+        options=list(range(1, num_of_plots + 1))
+    )
 
     plot_assignments = []
     num_assigned = 1
     plot_id = 1
 
     # This is meant to evenly distribute samples between plots
-    samples_per_plot = ceil(len(sample_names)/num_of_plots)
+    samples_per_plot = ceil(len(sample_names) / num_of_plots)
 
     for _ in sample_names:
 
@@ -138,12 +132,17 @@ def read_excel_384well_clariostar(input_file) -> tuple:
     # Function for reading the output of CLARIOstar instruments
     # I haven't used one of these in a while so this might be outdated
 
-    df_input = pd.read_excel(input_file, names=range(0,25))
-    
+    df_input = pd.read_excel(input_file, names=range(0, 25))
+
     parallel_found = False
     perpendicular_found = False
 
-    for i, row in df_input.iterrows(): # iterate over each dataframe entry (row) of the excel file
+    for (
+        i,
+        row,
+    ) in (
+        df_input.iterrows()
+    ):  # iterate over each dataframe entry (row) of the excel file
 
         parallel_table = True if "parallel" in str(row[1]) else False
         perpendicular_table = True if "perpendicular" in str(row[1]) else False
@@ -158,9 +157,12 @@ def read_excel_384well_clariostar(input_file) -> tuple:
 
     if parallel_found and perpendicular_found:
         return df_parallel, df_perpendicular
-    
+
     else:
-        raise Exception("Input file is missing recognizable parallel or perpendicular table.")
+        raise Exception(
+            "Input file is missing recognizable parallel or perpendicular table."
+        )
+
 
 def format_384well_table(df_input, i):
     # For 384-well plate, get excel table and rename columns and re-index
@@ -173,17 +175,22 @@ def format_384well_table(df_input, i):
     start_col = 1
     num_of_columns = len(COLUMNS)
 
-    df_output = excel_pull_table(df_input, start_row, end_row, start_col, num_of_columns)
+    df_output = excel_pull_table(
+        df_input, start_row, end_row, start_col, num_of_columns
+    )
 
     df_output.columns = COLUMNS
     df_output.set_index(pd.Series(ROW_IDX), inplace=True)
 
     return df_output
 
-def excel_pull_table(df_excel, start_row, end_row, start_col, num_of_columns) -> pd.DataFrame:
+
+def excel_pull_table(
+    df_excel, start_row, end_row, start_col, num_of_columns
+) -> pd.DataFrame:
     # Given table dimensions and position, subset and return dataframe
 
     df_rows = df_excel.iloc[start_row:end_row]
-    df_table = df_rows.iloc[:, start_col:num_of_columns + start_col]
-   
+    df_table = df_rows.iloc[:, start_col : num_of_columns + start_col]
+
     return df_table
