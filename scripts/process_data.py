@@ -3,18 +3,10 @@
 import pandas as pd
 import numpy as np
 
-
-def drop_empty_rows_columns(df_input):
-    df_output = df_input.dropna(axis=1, how="all")
-    df_output = df_output.dropna(axis=0, how="all")
-
-    return df_output
+from . import helpers
 
 
 def calculate_anisotropy(df_parallel, df_perpendicular):
-    # Check if both dataframes have the same shape
-    if df_parallel.shape != df_perpendicular.shape:
-        raise ValueError("Data layout for both tables must match.")
 
     # Define the anisotropy calculation function
     def _anisotropy_equation(parallel_value, perpendicular_value):
@@ -68,17 +60,14 @@ def get_data_over_titration(row, df_anisotropy, titration_direction):
 
     if titration_direction == "Rows":
         # Row-wise is default and range works for column names
-        titration_indices = get_titration_indices_row(titration_range_split)
+        titration_indices = helpers.get_titration_indices_row(titration_range_split)
 
-    elif titration_direction == "Columns":
+    else:
         # Column-wise is alt method and requires more work to get a range (because of alphabetical indices)
         column_labels = df_anisotropy.columns.values
-        titration_indices = get_titration_indices_column(
+        titration_indices = helpers.get_titration_indices_column(
             titration_range_split, column_labels
         )
-    # This check should happen in a dedicated input validation function
-    else:
-        raise Exception("Titration direction is required.")
 
     # subset row of data using list of column names/indices
     anisotropy_row = anisotropy_row.loc[titration_indices]
@@ -107,28 +96,3 @@ def get_data_over_titration(row, df_anisotropy, titration_direction):
             "anisotropy": anisotropy_row.to_list(),
         }
     )
-
-
-def get_titration_indices_row(titration_range_split):
-
-    return [
-        str(t)
-        for t in range(int(titration_range_split[0]), int(titration_range_split[1]) + 1)
-    ]
-
-
-def get_titration_indices_column(titration_range_split, column_labels):
-
-    start_idx = 0
-    end_idx = -1
-
-    for i, label in enumerate(column_labels):
-        # Get alphabet labels, record indices within array of labels
-        if label == titration_range_split[0]:
-            start_idx = i
-
-        if label == titration_range_split[1]:
-            end_idx = i
-
-    # Get labels required for titration range
-    return column_labels[start_idx:end_idx]

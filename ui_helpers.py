@@ -14,10 +14,9 @@ column_config_sample_table = {
     "Sample label": st.column_config.TextColumn(),
     "Titration row/column": st.column_config.TextColumn(),
     "Titration range": st.column_config.TextColumn(),
-    "Starting concentration": st.column_config.NumberColumn(),
+    "Starting concentration": st.column_config.NumberColumn(min_value=0),
     "Dilution factor": st.column_config.NumberColumn(),
-    "Ligand concentration": st.column_config.NumberColumn(),
-    "Units": st.column_config.SelectboxColumn(options=["nM", "uM", "mM"], default="nM"),
+    "Ligand concentration": st.column_config.NumberColumn(min_value=0),
     "Excluded wells": st.column_config.TextColumn(),
 }
 

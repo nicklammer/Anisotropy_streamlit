@@ -3,7 +3,7 @@ import streamlit as st
 import pandas as pd
 from math import ceil
 
-import helpers
+import ui_helpers
 
 
 def data_tab_selffill(tab, data_dict) -> dict:
@@ -20,19 +20,19 @@ def data_tab_selffill(tab, data_dict) -> dict:
     )
 
     if excel_file:
-        df_parallel, df_perpendicular = helpers.read_excel_384well_clariostar(
+        df_parallel, df_perpendicular = ui_helpers.read_excel_384well_clariostar(
             excel_file
         )
     else:
-        df_parallel = helpers.generate_empty_plate()
-        df_perpendicular = helpers.generate_empty_plate()
+        df_parallel = ui_helpers.generate_empty_plate()
+        df_perpendicular = ui_helpers.generate_empty_plate()
 
     tab.write("Parallel fluorescence")
     table_parallel = tab.data_editor(
         df_parallel,
         key="parallel",
         disabled=["_index"],
-        column_config=helpers.column_config_data_plate,
+        column_config=ui_helpers.column_config_data_plate,
     )
 
     tab.write("Perpendicular fluorescence")
@@ -40,20 +40,17 @@ def data_tab_selffill(tab, data_dict) -> dict:
         df_perpendicular,
         key="perpendicular",
         disabled=["_index"],
-        column_config=helpers.column_config_data_plate,
+        column_config=ui_helpers.column_config_data_plate,
     )
 
     tab.write("Enter sample information here:")
 
-    # TODO: This table needs to have a number of rows controlled by
-    # number_of_samples without erasing the contents.
-    # or maybe this doesn't matter?
     table_samples = tab.data_editor(
-        helpers.generate_sample_table(),
+        ui_helpers.generate_sample_table(),
         key="samples",
         hide_index=True,
         num_rows="dynamic",
-        column_config=helpers.column_config_sample_table,
+        column_config=ui_helpers.column_config_sample_table,
     )
 
     data_dict["units"] = tab.selectbox(
@@ -204,7 +201,7 @@ def plot_options_tab(tab, plot_dict, num_of_samples) -> dict:
 
 def style_options_tab(tab, sample_names, unique_names, num_of_plots) -> pd.DataFrame:
 
-    df_style, column_config = helpers.generate_plot_style_table(
+    df_style, column_config = ui_helpers.generate_plot_style_table(
         sample_names, unique_names, num_of_plots
     )
 

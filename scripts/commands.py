@@ -4,7 +4,7 @@ import pandas as pd
 import shutil
 import os
 
-from . import validate_inputs, process_data, fit, plot
+from . import validate_inputs, process_data, fit, plot, helpers
 
 def validate_user_inputs(data_dict, fit_dict, plot_dict, table_style):
     # Function to collect all validation functions
@@ -15,10 +15,10 @@ def process_anisotropy(data_dict, fit_dict, plot_dict, table_style, tmpdir):
     outdir_plots = f"{tmpdir}/plots"
     os.makedirs(outdir_plots, exist_ok=True)
 
-    data_dict["parallel table"] = process_data.drop_empty_rows_columns(
+    data_dict["parallel table"] = helpers.drop_empty_rows_columns(
         data_dict["parallel table"]
     )
-    data_dict["perpendicular table"] = process_data.drop_empty_rows_columns(
+    data_dict["perpendicular table"] = helpers.drop_empty_rows_columns(
         data_dict["perpendicular table"]
     )
 
