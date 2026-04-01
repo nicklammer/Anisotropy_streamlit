@@ -24,7 +24,7 @@ def map_plot_styles(df):
     return df
 
 
-def logplot(df_input, y_ax, plot_title, filename, plot_dict, tmpdir, normalized):
+def logplot(df_input, y_ax, plot_title, filename, plot_dict, outdir, normalized):
     # TODO: This needs updating. lots of formatting and confusing to read.
     df = df_input.copy()
     df = map_plot_styles(df)
@@ -115,10 +115,10 @@ def logplot(df_input, y_ax, plot_title, filename, plot_dict, tmpdir, normalized)
 
     # save as png for quick viewing, svg for further editing
     if plot_dict["save png"]:
-        plt.savefig(f"{tmpdir}/{filename}.png")
+        plt.savefig(f"{outdir}/{filename}.png")
 
     if plot_dict["save svg"]:
-        plt.savefig(f"{tmpdir}/{filename}.svg")
+        plt.savefig(f"{outdir}/{filename}.svg")
 
     return fig
 

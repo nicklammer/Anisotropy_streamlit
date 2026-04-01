@@ -6,12 +6,9 @@ from math import ceil
 import ui_helpers
 
 
-def data_tab_selffill(tab, data_dict) -> dict:
+def data_tab_table_anisotropy(tab, data_dict) -> dict:
 
-    # TODO: make a separate polarization page to simplify processing of data
-    data_dict["assay type"] = tab.selectbox(
-        "Anisotropy or polarization?", options=["Anisotropy", "Polarization"]
-    )
+    data_dict["assay"] = "anisotropy"
 
     excel_file = tab.file_uploader(
         "Upload CLARIOstar .xlsx file here (optional)",
@@ -20,9 +17,10 @@ def data_tab_selffill(tab, data_dict) -> dict:
     )
 
     if excel_file:
-        df_parallel, df_perpendicular = ui_helpers.read_excel_384well_clariostar(
+        df_parallel, df_perpendicular = ui_helpers.read_excel_384well_clariostar_anisotropy(
             excel_file
         )
+
     else:
         df_parallel = ui_helpers.generate_empty_plate()
         df_perpendicular = ui_helpers.generate_empty_plate()
@@ -42,6 +40,47 @@ def data_tab_selffill(tab, data_dict) -> dict:
         disabled=["_index"],
         column_config=ui_helpers.column_config_data_plate,
     )
+
+    # Pack up tables
+    data_dict["parallel table"] = table_parallel
+    data_dict["perpendicular table"] = table_perpendicular
+
+    return data_dict
+
+
+def data_tab_table_polarization(tab, data_dict) -> dict:
+
+    data_dict["assay"] = "polarization"
+
+    excel_file = tab.file_uploader(
+        "Upload CLARIOstar .xlsx file here (optional)",
+        accept_multiple_files=False,
+        type="xlsx",
+    )
+
+    if excel_file:
+        df_polarization = ui_helpers.read_excel_384well_clariostar_polarization(
+            excel_file
+        )
+
+    else:
+        df_polarization = ui_helpers.generate_empty_plate()
+
+    tab.write("Fluorescence polarization")
+    table_polarization = tab.data_editor(
+        df_polarization,
+        key="polarization",
+        disabled=["_index"],
+        column_config=ui_helpers.column_config_data_plate,
+    )
+
+    # Pack up tables
+    data_dict["polarization table"] = table_polarization
+
+    return data_dict
+
+
+def data_tab_sample_info(tab, data_dict):
 
     tab.write("Enter sample information here:")
 
@@ -72,8 +111,6 @@ def data_tab_selffill(tab, data_dict) -> dict:
     table_samples["unique name"] = new_sample_idx
 
     # Pack up tables
-    data_dict["parallel table"] = table_parallel
-    data_dict["perpendicular table"] = table_perpendicular
     data_dict["sample table"] = table_samples
     data_dict["sample names"] = sample_names
 
@@ -90,40 +127,38 @@ def fit_options_tab(tab, fit_dict) -> dict:
         options=["Simplified binding isotherm", "Quadratic", "Hill fit", "Multi-step"],
     )
 
+    display_fit_equation(left, fit_dict["fit type"])
+
     right.write("Initial parameters:")
 
     # Available parameters depend on the fit equation
-    # This is kind of like custom components?
     if fit_dict["fit type"] == "Multi-step":
-        multi_fit_options(left, right, fit_dict)
+        multi_fit_options(right, fit_dict)
 
     elif fit_dict["fit type"] == "Hill fit":
-        hill_fit_options(left, right, fit_dict)
+        hill_fit_options(right, fit_dict)
 
     else:
-        simplified_fit_options(left, right, fit_dict)
-
-    display_fit_equation(left, fit_dict["fit type"])
+        simplified_fit_options(right, fit_dict)
 
     return fit_dict
 
 
-# TODO: display fit equations on page
-def simplified_fit_options(left, right, fit_dict):
+def simplified_fit_options(right, fit_dict):
 
     fit_dict["Kdi"] = right.number_input("Kd", value=50.0)
     fit_dict["Si"] = right.number_input("S", value=0.1)
     fit_dict["Oi"] = right.number_input("O", value=0.05)
 
 
-def hill_fit_options(left, right, fit_dict):
-    simplified_fit_options(left, right, fit_dict)
+def hill_fit_options(right, fit_dict):
+    simplified_fit_options(right, fit_dict)
 
     fit_dict["ni"] = right.number_input("n", value=1.0)
 
 
-def multi_fit_options(left, right, fit_dict):
-    simplified_fit_options(left, right, fit_dict)
+def multi_fit_options(right, fit_dict):
+    simplified_fit_options(right, fit_dict)
 
     fit_dict["Kd2i"] = right.number_input("Kd2", value=500.0)
     fit_dict["S2i"] = right.number_input("S2", value=0.15)
@@ -165,8 +200,6 @@ def plot_options_tab(tab, plot_dict, num_of_samples) -> dict:
     plot_dict["show legend"] = left.checkbox("Show plot legend", value=True)
     plot_dict["save png"] = left.checkbox("Save .png files", value=True)
     plot_dict["save svg"] = left.checkbox("Save .svg files", value=True)
-    # TODO: is this flag ever needed
-    # plot_dict["show plots"] = left.checkbox("Show plots in a window", value=False)
 
     plot_dict["marker size"] = right.number_input(
         "Marker size", min_value=0.1, value=2.0, step=0.1

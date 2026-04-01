@@ -32,3 +32,26 @@ def get_titration_indices_column(titration_range_split, column_labels):
 
     # Get labels required for titration range
     return column_labels[start_idx:end_idx]
+
+def save_data_csv(df_all, assay, outpath):
+    # Save x and y data to csv file
+    data_dict = {}
+    headers = []
+
+    for i, row in df_all.iterrows():
+        sample_label = row["Sample label"]
+        x = row["concentration"]
+        y = row[assay]
+        units = row["units"]
+
+        data_dict[f"Concentration_{sample_label} ({units})"] = x
+        data_dict[f"{assay.capitalize()}_{sample_label}"] = y
+
+        headers.append(f"Concentration ({units})")
+        headers.append(f"{assay.capitalize()} {sample_label}")
+
+    df_out = pd.DataFrame.from_dict(data_dict)
+
+    df_out.to_csv(outpath, header=headers, index=False)
+
+        

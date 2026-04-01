@@ -127,9 +127,9 @@ def generate_plot_style_table(sample_names, unique_names, num_of_plots) -> tuple
     return df_style, column_config
 
 
-def read_excel_384well_clariostar(input_file) -> tuple:
+def read_excel_384well_clariostar_anisotropy(input_file) -> tuple:
     # Function for reading the output of CLARIOstar instruments
-    # I haven't used one of these in a while so this might be outdated
+    # Anisotropy edition
 
     df_input = pd.read_excel(input_file, names=range(0, 25))
 
@@ -160,6 +160,37 @@ def read_excel_384well_clariostar(input_file) -> tuple:
     else:
         raise Exception(
             "Input file is missing recognizable parallel or perpendicular table."
+        )
+    
+
+def read_excel_384well_clariostar_polarization(input_file) -> tuple:
+    # Function for reading the output of CLARIOstar instruments
+    # Polarization edition
+
+    df_input = pd.read_excel(input_file, names=range(0, 25))
+
+    polarization_found = False
+
+    for (
+        i,
+        row,
+    ) in (
+        df_input.iterrows()
+    ):  # iterate over each dataframe entry (row) of the excel file
+
+        polarization_table = True if str(row[1]).find("Polarization") == 0 else False
+
+        if polarization_table:
+            df_polarization = format_384well_table(df_input, i)
+            polarization_found = True
+
+
+    if polarization_found:
+        return df_polarization
+
+    else:
+        raise Exception(
+            "Input file is missing recognizable polarization table."
         )
 
 

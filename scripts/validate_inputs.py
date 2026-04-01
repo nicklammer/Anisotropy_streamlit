@@ -1,9 +1,6 @@
-# Placeholder for input validation functions
+# Input validation functions
 '''
 Need functions for:
-if quad fit chosen, requires ligand concentrations for each sample
-plot title and filename cannot be empty
-style options table can't be empty
 '''
 import pandas as pd
 import numpy as np
@@ -45,6 +42,7 @@ def check_sample_table_formatting(table_samples):
             raise Exception(f"Format of excluded wells is invalid for {row["Sample label"]}. Format should be like 1,2,3 or 1, 2, 3.")
 
 def check_unique_titration_idx(table_samples):
+
     titration_indices = table_samples["Titration row/column"]
     
     if len(titration_indices) != len(set(titration_indices)):
@@ -94,9 +92,10 @@ def check_empty_dataframe(df, tag):
         raise Exception(f"{tag} is empty.")
 
 def check_data_shape(df_parallel, df_perpendicular):
-    # Check if both dataframes have the same shape
-    if df_parallel.shape != df_perpendicular.shape:
-        raise ValueError("Data layout for both tables must match.")
+    # Check if both dataframes have the same layouts
+
+    if df_parallel.count != df_perpendicular.count:
+        raise ValueError("Data tables must match.")
 
 def check_data_ranges(df, table_samples, titration_direction):
     # given df, row/column, and ranges, check for None
@@ -134,4 +133,13 @@ def check_data_ranges(df, table_samples, titration_direction):
 
         # if row contains none/nan raise exception
         if any(row_data.isna()):
-            raise Exception(f"Titration range for {sample} invalid.")
+            raise Exception(f"Titration range for {sample} contains an empty value.")
+        
+def check_plot_options(plot_dict):
+
+    #TODO: is this true? should the plot title be a toggle
+    if plot_dict["plot title"] is None or plot_dict["plot title"] == '':
+        raise Exception("Plot title cannot be empty.")
+
+    if plot_dict["filename"] is None or plot_dict["filename"] == '':
+        raise Exception("File name cannot be empty.")

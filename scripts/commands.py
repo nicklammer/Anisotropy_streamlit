@@ -6,14 +6,35 @@ import os
 
 from . import validate_inputs, process_data, fit, plot, helpers
 
-def validate_user_inputs(data_dict, fit_dict, plot_dict, table_style):
+def validate_user_inputs(data_dict, plot_dict, table_style):
     # Function to collect all validation functions
-    return None
+        
+    validate_inputs.check_sample_table_formatting(data_dict["sample table"])
+    validate_inputs.check_unique_titration_idx(data_dict["sample table"])
+    validate_inputs.check_titration_direction_match(data_dict["titration direction"],
+                                               data_dict["sample table"])
+    validate_inputs.check_ligand_concentration(data_dict["sample table"])
 
-def process_anisotropy(data_dict, fit_dict, plot_dict, table_style, tmpdir):
+    if data_dict["assay"] == "anisotropy":
+        validate_inputs.check_empty_dataframe(data_dict["parallel table"], "Parallel table")
+        validate_inputs.check_empty_dataframe(data_dict["perpendicular table"], "Perpendicular table")
+        validate_inputs.check_data_shape(data_dict["parallel table"], data_dict["perpendicular table"])
+        validate_inputs.check_data_ranges(data_dict["parallel table"],
+                                          data_dict["sample table"],
+                                          data_dict["titration direction"])
+        
+    elif data_dict["assay"] == "polarization":
+        validate_inputs.check_empty_dataframe(data_dict["polarization table"], "Polarization table")
+        validate_inputs.check_data_ranges(data_dict["polarization table"],
+                                          data_dict["sample table"],
+                                          data_dict["titration direction"])
 
-    outdir_plots = f"{tmpdir}/plots"
-    os.makedirs(outdir_plots, exist_ok=True)
+
+    validate_inputs.check_plot_options(plot_dict)
+    validate_inputs.check_empty_dataframe(table_style, "Plot style table")
+
+
+def preprocess_anisotropy(data_dict):
 
     data_dict["parallel table"] = helpers.drop_empty_rows_columns(
         data_dict["parallel table"]
@@ -29,6 +50,35 @@ def process_anisotropy(data_dict, fit_dict, plot_dict, table_style, tmpdir):
         df_aniso, data_dict["sample table"], data_dict["titration direction"]
     )
 
+    return data_dict, df_sample_data
+
+def preprocess_polarization(data_dict):
+
+    data_dict["polarization table"] = helpers.drop_empty_rows_columns(
+        data_dict["polarization table"]
+    )
+
+    df_sample_data = process_data.compile_polarization(
+        data_dict["polarization table"], data_dict["sample table"], data_dict["titration direction"]
+    )
+
+    return data_dict, df_sample_data
+
+def process_fit_data(data_dict, fit_dict, plot_dict, table_style, tmpdir):
+
+    validate_user_inputs(data_dict, plot_dict, table_style)
+
+    outdir = f"{tmpdir}/plots"
+    os.makedirs(outdir, exist_ok=True)
+
+    assay = data_dict["assay"]
+
+    if assay == "anisotropy":
+        data_dict, df_sample_data = preprocess_anisotropy(data_dict)
+
+    elif assay == "polarization":
+        data_dict, df_sample_data = preprocess_polarization(data_dict)
+
     # Merge all dataframes
     df_all = pd.merge(data_dict["sample table"], table_style, on="unique name")
     df_all = pd.merge(df_all, df_sample_data, on="unique name")
@@ -37,7 +87,7 @@ def process_anisotropy(data_dict, fit_dict, plot_dict, table_style, tmpdir):
     df_all["units"] = data_dict["units"]
 
     # Fit data and merge with df_all
-    df_fit_results = fit_data(df_all, fit_dict, "anisotropy")
+    df_fit_results = fit_data(df_all, fit_dict, assay)
 
     df_all = df_all.merge(df_fit_results, on="unique name")
 
@@ -54,11 +104,11 @@ def process_anisotropy(data_dict, fit_dict, plot_dict, table_style, tmpdir):
 
         plot_current = plot.logplot(
             df_subset,
-            "anisotropy",
+            assay,
             plot_title,
             filename,
             plot_dict,
-            outdir_plots,
+            outdir,
             normalized=False,
         )
         plot_list.append(plot_current)
@@ -74,12 +124,14 @@ def process_anisotropy(data_dict, fit_dict, plot_dict, table_style, tmpdir):
                 plot_title,
                 filename,
                 plot_dict,
-                outdir_plots,
+                outdir,
                 normalized=True,
             )
             plot_list.append(plot_normalized)
 
-    zip_path = shutil.make_archive(outdir_plots, "zip", outdir_plots)
+    helpers.save_data_csv(df_all, assay, f"{outdir}/data_{plot_dict['filename']}.csv")
+
+    zip_path = shutil.make_archive(outdir, "zip", outdir)
 
     return zip_path, plot_list
 

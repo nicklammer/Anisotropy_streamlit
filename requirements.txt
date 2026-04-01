@@ -21,6 +21,7 @@ matplotlib==3.10.7
 mypy_extensions==1.1.0
 narwhals==2.11.0
 numpy==2.3.4
+openpyxl==3.1.5
 packaging==25.0
 pandas==2.3.3
 pathspec==0.12.1

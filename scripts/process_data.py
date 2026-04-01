@@ -42,8 +42,23 @@ def compile_anisotropy(
 
     return df_sample_data
 
+def compile_polarization(
+    df_polarization, table_samples, titration_direction
+) -> pd.DataFrame:
+    # Compiles polarization and concentration data for each sample
 
-def get_data_over_titration(row, df_anisotropy, titration_direction):
+    # Transpose input data if titrations were performed column-wise
+    if titration_direction == "Columns":
+        df_polarization = df_polarization.T
+
+    df_sample_data = table_samples.apply(
+        get_data_over_titration, axis=1, args=(df_polarization, titration_direction)
+    )
+
+    return df_sample_data
+
+
+def get_data_over_titration(row, df_input, titration_direction, assay):
 
     # unpack row
     titration_idx = row["Titration row/column"]
@@ -53,7 +68,7 @@ def get_data_over_titration(row, df_anisotropy, titration_direction):
     dilution_factor = row["Dilution factor"]
 
     # get row from input dataframe
-    anisotropy_row = df_anisotropy.loc[titration_idx]
+    input_row = df_input.loc[titration_idx]
 
     # parse titration range
     titration_range_split = titration_range.split("-")
@@ -64,25 +79,25 @@ def get_data_over_titration(row, df_anisotropy, titration_direction):
 
     else:
         # Column-wise is alt method and requires more work to get a range (because of alphabetical indices)
-        column_labels = df_anisotropy.columns.values
+        column_labels = df_input.columns.values
         titration_indices = helpers.get_titration_indices_column(
             titration_range_split, column_labels
         )
 
     # subset row of data using list of column names/indices
-    anisotropy_row = anisotropy_row.loc[titration_indices]
+    input_row = input_row.loc[titration_indices]
 
     # calculate serial dilution over titration range
     concentration_list = [
-        starting_conc / (dilution_factor**i) for i in range(len(anisotropy_row))
+        starting_conc / (dilution_factor**i) for i in range(len(input_row))
     ]
     # create pd.Series to mirror the data row above
-    concentration_row = pd.Series(concentration_list, index=anisotropy_row.index)
+    concentration_row = pd.Series(concentration_list, index=input_row.index)
 
     # drop excluded wells
     if excluded_wells:
         excluded_wells_list = [well.strip() for well in excluded_wells.split(",")]
-        anisotropy_row = anisotropy_row.drop(
+        input_row = input_row.drop(
             labels=excluded_wells_list, errors="ignore"
         )
         concentration_row = concentration_row.drop(
@@ -93,6 +108,6 @@ def get_data_over_titration(row, df_anisotropy, titration_direction):
         {
             "unique name": row["unique name"],
             "concentration": concentration_row.to_list(),
-            "anisotropy": anisotropy_row.to_list(),
+            assay: input_row.to_list(),
         }
     )
