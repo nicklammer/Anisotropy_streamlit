@@ -27,36 +27,64 @@ def calculate_anisotropy(df_parallel, df_perpendicular):
     return df_anisotropy
 
 
-def compile_anisotropy(
-    df_anisotropy, table_samples, titration_direction
+# def compile_anisotropy(
+#     df_anisotropy, table_samples, titration_direction
+# ) -> pd.DataFrame:
+#     # Compiles anisotropy and concentration data for each sample
+
+#     # Transpose input data if titrations were performed column-wise
+#     if titration_direction == "Columns":
+#         df_anisotropy = df_anisotropy.T
+
+#     df_sample_data = table_samples.apply(
+#         get_data_over_titration, axis=1, args=(df_anisotropy, titration_direction, "anisotropy")
+#     )
+
+#     return df_sample_data
+
+def compile_data_assay_concentration(
+    df_data, table_samples, titration_direction, assay
 ) -> pd.DataFrame:
-    # Compiles anisotropy and concentration data for each sample
+    # Compiles assay data and concentration data for each sample
 
     # Transpose input data if titrations were performed column-wise
     if titration_direction == "Columns":
-        df_anisotropy = df_anisotropy.T
+        df_data = df_data.T
 
     df_sample_data = table_samples.apply(
-        get_data_over_titration, axis=1, args=(df_anisotropy, titration_direction)
+        get_data_over_titration, axis=1, args=(df_data, titration_direction, assay)
     )
 
     return df_sample_data
 
-def compile_polarization(
-    df_polarization, table_samples, titration_direction
+def compile_data_assay_concentration_from_csv(
+    df_data, assay
 ) -> pd.DataFrame:
-    # Compiles polarization and concentration data for each sample
+    # Compiles assay data and concentration data for each sample
 
-    # Transpose input data if titrations were performed column-wise
-    if titration_direction == "Columns":
-        df_polarization = df_polarization.T
+    data_dict = {
+        "unique name": [],
+        "concentration": [],
+        assay: []
+    }
 
-    df_sample_data = table_samples.apply(
-        get_data_over_titration, axis=1, args=(df_polarization, titration_direction)
-    )
+    sample_idx = 0
+    for column in df_data.columns:
+
+        if "concentration" in str(column).lower():
+            data_dict["concentration"].append(df_data[column].dropna().to_list())
+
+        elif assay in str(column).lower():
+            data_dict[assay].append(df_data[column].dropna().to_list())
+
+            sample_name = column.lower().split(f"{assay} ")[1]
+            data_dict["unique name"].append(f"{str(sample_idx)}_{sample_name}")
+
+            sample_idx += 1
+
+    df_sample_data = pd.DataFrame.from_dict(data_dict)
 
     return df_sample_data
-
 
 def get_data_over_titration(row, df_input, titration_direction, assay):
 

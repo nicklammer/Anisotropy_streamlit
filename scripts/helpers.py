@@ -50,7 +50,8 @@ def save_data_csv(df_all, assay, outpath):
         headers.append(f"Concentration ({units})")
         headers.append(f"{assay.capitalize()} {sample_label}")
 
-    df_out = pd.DataFrame.from_dict(data_dict)
+    # df_out = pd.DataFrame.from_dict(data_dict)
+    df_out = pd.DataFrame({k: pd.Series(v) for k, v in data_dict.items()})
 
     df_out.to_csv(outpath, header=headers, index=False)
 

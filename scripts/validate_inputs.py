@@ -76,7 +76,7 @@ def check_ligand_concentration(table_samples):
     # If using the quad fit, ligand concentration is required
     # should only run if quad fit is chosen
 
-    ligand_conc = table_samples["Ligand concentration"]
+    ligand_conc = table_samples["Ligand concentration"].to_list()
 
     if None in ligand_conc:
         raise Exception("Ligand concentration is required for quadratic fit.")
@@ -88,14 +88,19 @@ def check_ligand_concentration(table_samples):
 def check_empty_dataframe(df, tag):
 
     # TODO: Is this how this works?
-    if df.empty():
+    if df.empty:
         raise Exception(f"{tag} is empty.")
 
 def check_data_shape(df_parallel, df_perpendicular):
     # Check if both dataframes have the same layouts
 
-    if df_parallel.count != df_perpendicular.count:
-        raise ValueError("Data tables must match.")
+    parallel_count = df_parallel.count()
+    perpendicular_count = df_perpendicular.count()
+
+    for i, _ in enumerate(parallel_count):
+        if parallel_count[i] != perpendicular_count[i]:
+            raise ValueError("Data tables must match.")
+
 
 def check_data_ranges(df, table_samples, titration_direction):
     # given df, row/column, and ranges, check for None

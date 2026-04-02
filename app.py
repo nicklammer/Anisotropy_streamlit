@@ -5,7 +5,8 @@ import streamlit as st
 
 pages = [
     ("anisotropy.py", "Anisotropy", ":material/table_view:"),
-    ("polarization.py", "Polarization", ":material/table:")
+    ("polarization.py", "Polarization", ":material/table:"),
+    ("plot_data.py", "Plot data", ":material/table:")
 ]
 
 # Iterate to make st.Page objects

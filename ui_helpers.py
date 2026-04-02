@@ -20,6 +20,11 @@ column_config_sample_table = {
     "Excluded wells": st.column_config.TextColumn(),
 }
 
+column_config_sample_table_csv_input = {
+    "Sample label": st.column_config.TextColumn(),
+    "Ligand concentration": st.column_config.NumberColumn(min_value=0),
+}
+
 # column config for style table is in the style table function
 
 # def create_column_config_style_table():
@@ -67,6 +72,33 @@ def generate_sample_table() -> pd.DataFrame:
         "Dilution factor": empty_column,
         "Ligand concentration": empty_column,
         "Excluded wells": empty_column,
+    }
+
+    sample_table = pd.DataFrame.from_dict(table_dict)
+
+    return sample_table
+
+def generate_empty_csv_table():
+
+    empty_column = [None]  # * number_of_samples
+
+    table_dict = {
+        "Concentration": empty_column,
+        "Assay data": empty_column
+    }
+
+    csv_table = pd.DataFrame.from_dict(table_dict)
+
+    return csv_table
+
+def generate_sample_table_csv_input(sample_names) -> pd.DataFrame:
+    # Generate sample info table
+
+    empty_column = [None] * len(sample_names)
+
+    table_dict = {
+        "Sample label": sample_names,
+        "Ligand concentration": empty_column
     }
 
     sample_table = pd.DataFrame.from_dict(table_dict)
@@ -224,3 +256,26 @@ def excel_pull_table(
     df_table = df_rows.iloc[:, start_col : num_of_columns + start_col]
 
     return df_table
+
+def read_csv_input(input_file, data_dict):
+
+    df_data = pd.read_csv(input_file)
+
+    columns = df_data.columns
+
+    # Glean assay type
+    if "anisotropy" in str(columns[1]).casefold():
+        assay = "anisotropy"
+    
+    elif "polarization" in str(columns[1]).casefold():
+        assay = "polarization"
+    
+    else:
+        raise Exception("Data column names must start with Anisotropy or Polarization")
+
+    data_dict["assay"] = assay
+
+    # Get sample names from column names
+    data_dict["sample names"] = [col.lower().split(f"{assay} ")[1] for col in columns if assay in col.lower()]
+
+    return df_data, data_dict
