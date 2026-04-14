@@ -4,7 +4,7 @@ import pandas as pd
 from string import ascii_uppercase
 from math import ceil
 
-import plot_styles
+from ui import styles
 
 column_config_data_plate = dict(
     [(str(column), st.column_config.NumberColumn()) for column in range(1, 25)]
@@ -24,22 +24,6 @@ column_config_sample_table_csv_input = {
     "Sample label": st.column_config.TextColumn(),
     "Ligand concentration": st.column_config.NumberColumn(min_value=0),
 }
-
-# column config for style table is in the style table function
-
-# def create_column_config_style_table():
-# {
-#     "Sample": st.column_config.TextColumn(),
-#     "Color": st.column_config.SelectboxColumn(
-#         options=list(plot_styles.color_dict.keys())
-#     ),
-#     "Marker style": st.column_config.SelectboxColumn(
-#         options=list(plot_styles.marker_dict.keys())
-#     ),
-#     "Line style": st.column_config.SelectboxColumn(
-#         options=list(plot_styles.line_dict.keys())
-#     ),
-# }
 
 
 def generate_empty_plate() -> pd.DataFrame:
@@ -62,7 +46,7 @@ def generate_empty_plate() -> pd.DataFrame:
 def generate_sample_table() -> pd.DataFrame:
     # Generate sample info table
 
-    empty_column = [None]  # * number_of_samples
+    empty_column = [None]
 
     table_dict = {
         "Sample label": empty_column,
@@ -78,9 +62,10 @@ def generate_sample_table() -> pd.DataFrame:
 
     return sample_table
 
+
 def generate_empty_csv_table():
 
-    empty_column = [None]  # * number_of_samples
+    empty_column = [None]
 
     table_dict = {
         "Concentration": empty_column,
@@ -90,6 +75,7 @@ def generate_empty_csv_table():
     csv_table = pd.DataFrame.from_dict(table_dict)
 
     return csv_table
+
 
 def generate_sample_table_csv_input(sample_names) -> pd.DataFrame:
     # Generate sample info table
@@ -109,9 +95,9 @@ def generate_sample_table_csv_input(sample_names) -> pd.DataFrame:
 def generate_plot_style_table(sample_names, unique_names, num_of_plots) -> tuple:
     # Generate table for choosing line and marker styles
 
-    color_names = list(plot_styles.color_dict.keys())
-    marker_names = list(plot_styles.marker_dict.keys())
-    line_names = list(plot_styles.line_dict.keys())
+    color_names = list(styles.color_dict.keys())
+    marker_names = list(styles.marker_dict.keys())
+    line_names = list(styles.line_dict.keys())
 
     column_config = {
         "Sample": st.column_config.TextColumn(),
@@ -168,12 +154,7 @@ def read_excel_384well_clariostar_anisotropy(input_file) -> tuple:
     parallel_found = False
     perpendicular_found = False
 
-    for (
-        i,
-        row,
-    ) in (
-        df_input.iterrows()
-    ):  # iterate over each dataframe entry (row) of the excel file
+    for i, row in df_input.iterrows():
 
         parallel_table = True if "parallel" in str(row[1]) else False
         perpendicular_table = True if "perpendicular" in str(row[1]) else False
@@ -193,7 +174,7 @@ def read_excel_384well_clariostar_anisotropy(input_file) -> tuple:
         raise Exception(
             "Input file is missing recognizable parallel or perpendicular table."
         )
-    
+
 
 def read_excel_384well_clariostar_polarization(input_file) -> tuple:
     # Function for reading the output of CLARIOstar instruments
@@ -203,19 +184,13 @@ def read_excel_384well_clariostar_polarization(input_file) -> tuple:
 
     polarization_found = False
 
-    for (
-        i,
-        row,
-    ) in (
-        df_input.iterrows()
-    ):  # iterate over each dataframe entry (row) of the excel file
+    for i, row in df_input.iterrows():
 
         polarization_table = True if str(row[1]).find("Polarization") == 0 else False
 
         if polarization_table:
             df_polarization = format_384well_table(df_input, i)
             polarization_found = True
-
 
     if polarization_found:
         return df_polarization
@@ -257,6 +232,7 @@ def excel_pull_table(
 
     return df_table
 
+
 def read_csv_input(input_file, data_dict):
 
     df_data = pd.read_csv(input_file)
@@ -266,10 +242,10 @@ def read_csv_input(input_file, data_dict):
     # Glean assay type
     if "anisotropy" in str(columns[1]).casefold():
         assay = "anisotropy"
-    
+
     elif "polarization" in str(columns[1]).casefold():
         assay = "polarization"
-    
+
     else:
         raise Exception("Data column names must start with Anisotropy or Polarization")
 

@@ -12,14 +12,14 @@ plt.rcParams["svg.fonttype"] = "none"
 
 from collections import defaultdict
 
-import plot_styles
+from ui import styles
 
 
 def map_plot_styles(df):
     # Map color reference names to the friendly names user chose
-    df["Color"] = df["Color"].map(plot_styles.color_dict)
-    df["Marker style"] = df["Marker style"].map(plot_styles.marker_dict)
-    df["Line style"] = df["Line style"].map(plot_styles.line_dict)
+    df["Color"] = df["Color"].map(styles.color_dict)
+    df["Marker style"] = df["Marker style"].map(styles.marker_dict)
+    df["Line style"] = df["Line style"].map(styles.line_dict)
 
     return df
 

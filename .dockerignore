@@ -1,0 +1,29 @@
+# Virtual environments
+.venv
+venv
+env
+
+# Git
+.git
+.gitignore
+
+# Python bytecode
+__pycache__
+**/__pycache__
+*.pyc
+*.pyo
+*.pyd
+
+# Sample / test data
+FA_data
+test_data
+
+# Docker artifacts
+Dockerfile.bak
+
+# Dev/editor artifacts
+notes.txt
+*.log
+.DS_Store
+.env
+*.egg-info

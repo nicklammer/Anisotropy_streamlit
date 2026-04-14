@@ -3,7 +3,7 @@ import streamlit as st
 import pandas as pd
 from math import ceil
 
-import ui_helpers
+from ui import helpers
 
 
 def data_tab_table_anisotropy(tab, data_dict) -> dict:
@@ -17,20 +17,20 @@ def data_tab_table_anisotropy(tab, data_dict) -> dict:
     )
 
     if excel_file:
-        df_parallel, df_perpendicular = ui_helpers.read_excel_384well_clariostar_anisotropy(
+        df_parallel, df_perpendicular = helpers.read_excel_384well_clariostar_anisotropy(
             excel_file
         )
 
     else:
-        df_parallel = ui_helpers.generate_empty_plate()
-        df_perpendicular = ui_helpers.generate_empty_plate()
+        df_parallel = helpers.generate_empty_plate()
+        df_perpendicular = helpers.generate_empty_plate()
 
     tab.write("Parallel fluorescence")
     table_parallel = tab.data_editor(
         df_parallel,
         key="parallel",
         disabled=["_index"],
-        column_config=ui_helpers.column_config_data_plate,
+        column_config=helpers.column_config_data_plate,
     )
 
     tab.write("Perpendicular fluorescence")
@@ -38,7 +38,7 @@ def data_tab_table_anisotropy(tab, data_dict) -> dict:
         df_perpendicular,
         key="perpendicular",
         disabled=["_index"],
-        column_config=ui_helpers.column_config_data_plate,
+        column_config=helpers.column_config_data_plate,
     )
 
     # Pack up tables
@@ -59,19 +59,19 @@ def data_tab_table_polarization(tab, data_dict) -> dict:
     )
 
     if excel_file:
-        df_polarization = ui_helpers.read_excel_384well_clariostar_polarization(
+        df_polarization = helpers.read_excel_384well_clariostar_polarization(
             excel_file
         )
 
     else:
-        df_polarization = ui_helpers.generate_empty_plate()
+        df_polarization = helpers.generate_empty_plate()
 
     tab.write("Fluorescence polarization")
     table_polarization = tab.data_editor(
         df_polarization,
         key="polarization",
         disabled=["_index"],
-        column_config=ui_helpers.column_config_data_plate,
+        column_config=helpers.column_config_data_plate,
     )
 
     # Pack up tables
@@ -85,11 +85,11 @@ def data_tab_sample_info(tab, data_dict):
     tab.write("Enter sample information here:")
 
     table_samples = tab.data_editor(
-        ui_helpers.generate_sample_table(),
+        helpers.generate_sample_table(),
         key="samples",
         hide_index=True,
         num_rows="dynamic",
-        column_config=ui_helpers.column_config_sample_table,
+        column_config=helpers.column_config_sample_table,
     )
 
     data_dict["units"] = tab.selectbox(
@@ -116,6 +116,7 @@ def data_tab_sample_info(tab, data_dict):
 
     return data_dict
 
+
 def data_tab_table_csv(tab, data_dict) -> dict:
 
     csv_file = tab.file_uploader(
@@ -125,7 +126,7 @@ def data_tab_table_csv(tab, data_dict) -> dict:
     )
 
     if csv_file:
-        df_data, data_dict = ui_helpers.read_csv_input(
+        df_data, data_dict = helpers.read_csv_input(
             csv_file, data_dict
         )
 
@@ -139,17 +140,17 @@ def data_tab_table_csv(tab, data_dict) -> dict:
     else:
         # No file uploaded, insert placeholder table
         table_data = tab.data_editor(
-            ui_helpers.generate_empty_csv_table(),
+            helpers.generate_empty_csv_table(),
             key="csv input",
             hide_index=True
         )
         data_dict["sample names"] = [None]
 
     table_samples = tab.data_editor(
-        ui_helpers.generate_sample_table_csv_input(data_dict["sample names"]),
+        helpers.generate_sample_table_csv_input(data_dict["sample names"]),
         key="samples",
         hide_index=True,
-        column_config=ui_helpers.column_config_sample_table_csv_input,
+        column_config=helpers.column_config_sample_table_csv_input,
         )
 
     data_dict["units"] = tab.selectbox(
@@ -157,14 +158,14 @@ def data_tab_table_csv(tab, data_dict) -> dict:
     options=["fM", "pM", "nM", "uM", "mM", "M"],
     index=2,
     )
-    
+
     sample_names = table_samples["Sample label"]
     sample_idx = table_samples.index.tolist()
     new_sample_idx = [
         f"{str(idx)}_{name}" for idx, name in zip(sample_idx, sample_names)
     ]
     table_samples["unique name"] = new_sample_idx
-    
+
     # Pack up tables
     data_dict["sample table"] = table_samples
     data_dict["data table"] = table_data
@@ -289,7 +290,7 @@ def plot_options_tab(tab, plot_dict, num_of_samples) -> dict:
 
 def style_options_tab(tab, sample_names, unique_names, num_of_plots) -> pd.DataFrame:
 
-    df_style, column_config = ui_helpers.generate_plot_style_table(
+    df_style, column_config = helpers.generate_plot_style_table(
         sample_names, unique_names, num_of_plots
     )
 

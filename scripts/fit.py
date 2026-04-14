@@ -4,165 +4,95 @@ import scipy.optimize as opt
 import numpy as np
 
 
-def simplified(P, Kd, S, O):
-    return S * (P / (P + Kd)) + O
+def simplified(P, Kd, S, offset):
+    return S * (P / (P + Kd)) + offset
 
 
-def quad(P, Kd, S, O, L):
+def quad(P, Kd, S, offset, L):
     # L is ligand held at constant concentration
     a = P + L + Kd
-    return S * ((a - (((a**2) - (4 * P * L)) ** 0.5)) / (2 * L)) + O
+    return S * ((a - (((a**2) - (4 * P * L)) ** 0.5)) / (2 * L)) + offset
 
 
-def hill(P, Kd, S, O, n):
-    return S * ((P ** (n) / ((P ** (n) + (Kd ** (n)))))) + O
+def hill(P, Kd, S, offset, n):
+    return S * ((P ** (n) / ((P ** (n) + (Kd ** (n)))))) + offset
 
 
-def multi(P, Kd, Kd2, S, S2, O):
-    return (S * (P / (Kd + P)) + S2 * (P / (Kd2 + P))) + O
+def multi(P, Kd, Kd2, S, S2, offset):
+    return (S * (P / (Kd + P)) + S2 * (P / (Kd2 + P))) + offset
 
 
 def r_squared(y, residuals):
     ss_res = np.sum(residuals**2)
     ss_tot = np.sum((y - np.mean(y)) ** 2)
-    r_sq = 1 - (ss_res / ss_tot)
-    return r_sq
+    return 1 - (ss_res / ss_tot)
 
 
-def normalize_y(y, S, O):
-    return (y - O) / S
+def normalize_y(y, S, offset):
+    return (y - offset) / S
 
 
-# TODO: might be a way to condense these funcs. several repeated lines
+def _run_fit(fn, x, y, p0):
+    """Run curve_fit and return fit results common to all fit types."""
+    bounds = ((0,) * len(p0), (np.inf,) * len(p0))
+    popt, _ = opt.curve_fit(fn, x, y, p0=p0, bounds=bounds)
+    x_fit = np.geomspace(x[-1], x[0], 50)
+    y_fit = fn(x_fit, *popt)
+    residuals = np.array(y) - fn(np.array(x), *popt)
+    return x_fit, y_fit, popt, r_squared(y, residuals)
+
+
 def get_simple_fit(x, y, units, fit_dict, **kwargs):
+    p0 = [fit_dict["Kdi"], fit_dict["Si"], fit_dict["Oi"]]
+    x_fit, y_fit, popt, r_sq = _run_fit(simplified, x, y, p0)
+    Kd, S, offset = popt
+    y_norm     = [normalize_y(yi, S, offset) for yi in y]
+    y_fit_norm = [normalize_y(yi, S, offset) for yi in y_fit]
+    return x_fit, y_fit, y_norm, y_fit_norm, {
+        f"Kd ({units})": str(round(Kd, 2)),
+        "S": str(round(S, 4)), "O": str(round(offset, 4)),
+        "R^2": str(round(r_sq, 4)),
+    }
 
-    fit_params = {}
 
+def get_quad_fit(x, y, units, fit_dict, ligand_conc, **kwargs):
     p0 = [fit_dict["Kdi"], fit_dict["Si"], fit_dict["Oi"]]
 
-    popt, _ = opt.curve_fit(
-        simplified, x, y, p0=p0, bounds=((0, 0, 0), (np.inf, np.inf, np.inf))
-    )
+    def fn(P, Kd, S, offset):
+        return quad(P, Kd, S, offset, ligand_conc)
 
-    x_fit = np.geomspace(x[-1], x[0], 50)
-    y_fit = simplified(x_fit, *popt)
-
-    # popt[1] is S, popt[2] is O
-    # y_norm = (y - popt[2]) / popt[1]
-    y_norm = [normalize_y(yi, popt[1], popt[2]) for yi in y]
-    y_fit_norm = [normalize_y(yi, popt[1], popt[2]) for yi in y_fit]
-
-    # calculate R-squared
-    residuals = np.array(y) - simplified(np.array(x), *popt)
-    r_sq = r_squared(y, residuals)
-
-    fit_params[f"Kd ({units})"] = str(round(popt[0], 2))
-    fit_params["S"] = str(round(popt[1], 4))
-    fit_params["O"] = str(round(popt[2], 4))
-    fit_params["R^2"] = str(round(r_sq, 4))
-
-    return x_fit, y_fit, y_norm, y_fit_norm, fit_params
-
-
-def get_quad_fit(x, y, units, fit_dict, ligand_conc=None, **kwargs):
-
-    fit_params = {}
-
-    p0 = [fit_dict["Kdi"], fit_dict["Si"], fit_dict["Oi"]]
-
-    quad_lambda = lambda P, Kd, S, O: quad(P, Kd, S, O, ligand_conc)
-
-    popt, _ = opt.curve_fit(
-        quad_lambda, x, y, p0=p0, bounds=((0, 0, 0), (np.inf, np.inf, np.inf))
-    )
-
-    x_fit = np.geomspace(x[-1], x[0], 50)
-    y_fit = quad(x_fit, popt[0], popt[1], popt[2], ligand_conc)
-
-    # popt[1] is S, popt[2] is O
-    y_norm = [normalize_y(yi, popt[1], popt[2]) for yi in y]
-    y_fit_norm = [normalize_y(yi, popt[1], popt[2]) for yi in y_fit]
-
-    # calculate R-squared
-    residuals = np.array(y) - quad(np.array(x), popt[0], popt[1], popt[2], ligand_conc)
-    r_sq = r_squared(y, residuals)
-
-    fit_params[f"Kd ({units})"] = str(round(popt[0], 2))
-    fit_params["S"] = str(round(popt[1], 4))
-    fit_params["O"] = str(round(popt[2], 4))
-    fit_params["R^2"] = str(round(r_sq, 4))
-
-    return x_fit, y_fit, y_norm, y_fit_norm, fit_params
+    x_fit, y_fit, popt, r_sq = _run_fit(fn, x, y, p0)
+    Kd, S, offset = popt
+    y_norm     = [normalize_y(yi, S, offset) for yi in y]
+    y_fit_norm = [normalize_y(yi, S, offset) for yi in y_fit]
+    return x_fit, y_fit, y_norm, y_fit_norm, {
+        f"Kd ({units})": str(round(Kd, 2)),
+        "S": str(round(S, 4)), "O": str(round(offset, 4)),
+        "R^2": str(round(r_sq, 4)),
+    }
 
 
 def get_hill_fit(x, y, units, fit_dict, **kwargs):
-
-    fit_params = {}
-
     p0 = [fit_dict["Kdi"], fit_dict["Si"], fit_dict["Oi"], fit_dict["ni"]]
-
-    popt, _ = opt.curve_fit(
-        hill, x, y, p0=p0, bounds=((0, 0, 0, 0), (np.inf, np.inf, np.inf, np.inf))
-    )
-
-    x_fit = np.geomspace(x[-1], x[0], 50)
-    y_fit = hill(x_fit, *popt)
-
-    # popt[1] is S, popt[2] is O
-    # y_norm = (y - popt[2]) / popt[1]
-    y_norm = [normalize_y(yi, popt[1], popt[2]) for yi in y]
-    y_fit_norm = [normalize_y(yi, popt[1], popt[2]) for yi in y_fit]
-
-    # calculate R-squared
-    residuals = np.array(y) - hill(np.array(x), *popt)
-    r_sq = r_squared(y, residuals)
-
-    fit_params[f"Kd ({units})"] = str(round(popt[0], 2))
-    fit_params["n"] = str(round(popt[3], 2))
-    fit_params["S"] = str(round(popt[1], 4))
-    fit_params["O"] = str(round(popt[2], 4))
-    fit_params["R^2"] = str(round(r_sq, 4))
-
-    return x_fit, y_fit, y_norm, y_fit_norm, fit_params
+    x_fit, y_fit, popt, r_sq = _run_fit(hill, x, y, p0)
+    Kd, S, offset, n = popt
+    y_norm     = [normalize_y(yi, S, offset) for yi in y]
+    y_fit_norm = [normalize_y(yi, S, offset) for yi in y_fit]
+    return x_fit, y_fit, y_norm, y_fit_norm, {
+        f"Kd ({units})": str(round(Kd, 2)), "n": str(round(n, 2)),
+        "S": str(round(S, 4)), "O": str(round(offset, 4)),
+        "R^2": str(round(r_sq, 4)),
+    }
 
 
 def get_multi_fit(x, y, units, fit_dict, **kwargs):
-
-    fit_params = {}
-
-    p0 = [
-        fit_dict["Kdi"],
-        fit_dict["Kd2i"],
-        fit_dict["Si"],
-        fit_dict["S2i"],
-        fit_dict["Oi"],
-    ]
-
-    popt, _ = opt.curve_fit(
-        multi,
-        x,
-        y,
-        p0=p0,
-        bounds=((0, 0, 0, 0, 0), (np.inf, np.inf, np.inf, np.inf, np.inf)),
-    )
-
-    x_fit = np.geomspace(x[-1], x[0], 50)
-    y_fit = multi(x_fit, *popt)
-
-    # popt[2] is S, popt[3] is S2, popt[4] is O
-    # y_norm = (y - popt[4]) / (popt[2] + popt[3])
-    y_norm = [normalize_y(yi, (popt[2] + popt[3]), popt[4]) for yi in y]
-    y_fit_norm = [normalize_y(yi, (popt[2] + popt[3]), popt[4]) for yi in y_fit]
-
-    # calculate R-squared
-    residuals = np.array(y) - multi(np.array(x), *popt)
-    r_sq = r_squared(y, residuals)
-
-    fit_params[f"Kd ({units})"] = str(round(popt[0], 2))
-    fit_params[f"Kd2 ({units})"] = str(round(popt[1], 2))
-    fit_params["S"] = str(round(popt[2], 4))
-    fit_params["S2"] = str(round(popt[3], 4))
-    fit_params["O"] = str(round(popt[4], 4))
-    fit_params["R^2"] = str(round(r_sq, 4))
-
-    return x_fit, y_fit, y_norm, y_fit_norm, fit_params
+    p0 = [fit_dict["Kdi"], fit_dict["Kd2i"], fit_dict["Si"], fit_dict["S2i"], fit_dict["Oi"]]
+    x_fit, y_fit, popt, r_sq = _run_fit(multi, x, y, p0)
+    Kd, Kd2, S, S2, offset = popt
+    y_norm     = [normalize_y(yi, S + S2, offset) for yi in y]
+    y_fit_norm = [normalize_y(yi, S + S2, offset) for yi in y_fit]
+    return x_fit, y_fit, y_norm, y_fit_norm, {
+        f"Kd ({units})": str(round(Kd, 2)), f"Kd2 ({units})": str(round(Kd2, 2)),
+        "S": str(round(S, 4)), "S2": str(round(S2, 4)), "O": str(round(offset, 4)),
+        "R^2": str(round(r_sq, 4)),
+    }

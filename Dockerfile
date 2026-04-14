@@ -1,7 +1,8 @@
 # This dockerfile looks this way to optimize on storage space. Probably not super necessary.
 # Build stage
-FROM python:3.12-slim-bookworm AS builder
+FROM python:3.12-slim AS builder
 WORKDIR /app
+ENV PYTHONDONTWRITEBYTECODE=1
 
 RUN python -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
@@ -9,11 +10,7 @@ ENV PATH="/opt/venv/bin:$PATH"
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Remove compiled python files and build artifacts
-RUN find /opt/venv -name "*.pyc" -delete && \
-    find /opt/venv -name "__pycache__" -delete
-
-FROM python:3.12-slim-bookworm
+FROM python:3.12-slim
 
 WORKDIR /app
 

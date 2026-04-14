@@ -94,12 +94,8 @@ def check_empty_dataframe(df, tag):
 def check_data_shape(df_parallel, df_perpendicular):
     # Check if both dataframes have the same layouts
 
-    parallel_count = df_parallel.count()
-    perpendicular_count = df_perpendicular.count()
-
-    for i, _ in enumerate(parallel_count):
-        if parallel_count[i] != perpendicular_count[i]:
-            raise ValueError("Data tables must match.")
+    if not (df_parallel.count() == df_perpendicular.count()).all():
+        raise ValueError("Data tables must match.")
 
 
 def check_data_ranges(df, table_samples, titration_direction):
