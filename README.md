@@ -12,7 +12,7 @@ Download and install Docker Desktop for your operating system:
 - **Mac**: https://docs.docker.com/desktop/install/mac-install/
 - **Windows**: https://docs.docker.com/desktop/install/windows-install/
 
-Open Docker Desktop and let it finish starting up before continuing.
+Open Docker Desktop and let it finish starting up before continuing. You can skip account creation.
 
 ### 2. Pull the image
 
@@ -29,7 +29,7 @@ This downloads the app image. You only need to do this once (or again later to g
 
 ### 3. Run the container
 
-In Docker Desktop, go to the **Images** tab, find `anisotropy-streamlit`, and click **Run**.
+In Docker Desktop, go to the **Images** tab, find `ghcr.io/nicklammer/anisotropy_streamlit/anisotropy_streamlit:latest`, and click the triangle Run button on the right side of the row.
 
 In the dialog that appears, expand **Optional settings** and set:
 - **Host port**: `8501`
@@ -41,9 +41,11 @@ Open your browser and go to:
 http://localhost:8501
 ```
 
+If it doesn't work, try using a different port in the Host port settings and replace the end of the URL with the new port.
+
 ### 4. Stop the container
 
-In Docker Desktop, go to the **Containers** tab, find the running container, and click the **Stop** button (square icon). You can start it again from the same tab whenever you need it.
+When you're done analyzing, go to the **Containers** tab, find the running container, and click the square **Stop** button. You can start it again from the same tab whenever you need it.
 
 
 ## Usage

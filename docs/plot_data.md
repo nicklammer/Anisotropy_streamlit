@@ -5,9 +5,9 @@ This page accepts pre-formatted CSV data and fits/plots it directly, without req
 
 ## Data Input
 - Upload a `.csv` file using the file uploader in the **Data** tab. You cannot paste data into this table.
-- The expected format is two columns per sample. 
-    - The first column is concentration values with units in parentheses.
-    - The second column is the name of the assay and the sample name. Ex: Anisotropy sample1.
+- The expected format is two columns per sample: concentration and assay values
+    - The first column header should be "Concentration"
+    - The second column header should be the name of the assay and the sample name. Ex: Anisotropy sample1.
 - The sample table will autofill the Sample label column. Ligand concentration is only needed if using the quadratic fit.
 
 ## Fit Options
