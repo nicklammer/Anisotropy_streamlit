@@ -22,7 +22,7 @@ In Docker Desktop, open the built-in terminal by clicking the **Terminal** butto
 - **Windows**: `Ctrl + Shift + V` to paste
 
 ```
-docker pull ghcr.io/nicklammer/anisotropy-streamlit:latest
+docker pull ghcr.io/nicklammer/anisotropy_streamlit/anisotropy_streamlit:latest
 ```
 
 This downloads the app image. You only need to do this once (or again later to get updates). It will use about 1.2 GB of space.
